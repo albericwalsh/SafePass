@@ -1,0 +1,22 @@
+
+.col-25 {
+    width: 25%;
+}
+
+.col-50 {
+    width: 50%;
+}
+
+.col-75 {
+    width: 75%;
+}
+
+.col-100 {
+    width: 100%;
+}
+
+
+.custom-container {
+    display: flex;
+    margin: 25px auto;
+}

@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS safepassdb;
+
+use safepassdb;
 
 DROP TABLE IF EXISTS Data;
 DROP TABLE IF EXISTS User;
