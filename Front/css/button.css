@@ -1,5 +1,6 @@
 
 .simple-button {
+    margin: 2%;
     padding: 2% 10%;
     background-color: var(--couleur-dark);
     border: none;
