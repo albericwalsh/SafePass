@@ -27,6 +27,33 @@
     border: none;
 }
 
+.long-button {
+    width: 100%;
+    margin: 2% 0;
+    background-color: var(--couleur-dark);
+    border: none;
+    color: var(--couleur-white);
+    font-size: 75px; /* Taille du texte */
+    font-weight: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease; /* Transition pour effet de survol */
+}
+
+.long-button:hover{
+    background-color: var(--couleur-secondary);
+}
+
+.long-button:active{
+    background-color: var(--couleur-primary);
+    border: none;
+}
+
+.long-button:focus{
+    border: none;
+}
+
 .link-button {
     padding:  0 2%;
     background-color: transparent;

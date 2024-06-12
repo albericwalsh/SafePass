@@ -1,0 +1,20 @@
+.card {
+    width: 100%;
+    border: none;
+    background-color: var(--couleur-dark);
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card-body {
+    border: none;
+    background-color: transparent;
+    color: var(--couleur-black);
+}
+
+.card-title {
+    font-size: 75px;
+    font-weight: 200;
+    border: none;
+    color: var(--couleur-white);
+    align-self:  center;
+}
