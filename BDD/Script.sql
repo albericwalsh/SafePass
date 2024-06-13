@@ -11,7 +11,7 @@ CREATE TABLE User
     Id INTEGER PRIMARY KEY AUTO_INCREMENT,
     User_name VARCHAR(255) NOT NULL ,
     Address_mail VARCHAR(255) NOT NULL,
-    Password VARCHAR(255) NOT NULL
+    Password VARCHAR(512) NOT NULL
 );
 
 
@@ -19,9 +19,9 @@ CREATE TABLE Data
 (
     Id INTEGER PRIMARY KEY AUTO_INCREMENT,
     Encrypted_Uid INTEGER,
-    Title VARCHAR(255),
-    Identifiant VARCHAR(255) NOT NULL,
-    Password VARCHAR(255) NOT NULL,
+    Title VARCHAR(512),
+    Identifiant VARCHAR(512) NOT NULL,
+    Password VARCHAR(512) NOT NULL,
     Url_site VARCHAR(2083) NOT NULL,
     Notes VARCHAR(1000),
     Expiration_suggestion VARCHAR(10)

@@ -33,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <script>
+        localStorage.setItem('username', 'username');
 
         async function login() {
             const username = document.querySelector('input[name="username"]').value;
@@ -45,14 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 const response = await fetch(url, {method: 'POST'});
                 const result = await response.text();
 
+                sessionStorage.setItem('username', username);
+                sessionStorage.setItem('key', key);
+
 
                 if (result.includes('Login successful')) {
                     alert('Login successful')
-
-                    // Set cookies for username and key
-                    setCookie('uid', 1, sessionStorage); // Cookie expires in 7 days
-                    setCookie('key', key, sessionStorage); // Cookie expires in 7 days
-
                     // Assuming your PHP script is on the same domain and sets the session/cookie
                     await fetch('./login-test.php', {
                         method: 'POST',
@@ -71,13 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 console.error('Error during login:', error);
                 alert('Error during login: ' + error);
             }
-        }
-
-        function setCookie(name, value, days) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = "expires=" + d.toUTCString();
-            document.cookie = name + "=" + value + ";" + expires + ";path=/";
         }
     </script>
 </head>

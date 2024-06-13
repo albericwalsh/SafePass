@@ -1,6 +1,7 @@
 import mysql.connector
 from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 debug = ""
 
@@ -101,18 +102,23 @@ def sign_up(user_name, address_mail, password):
 def login(user_name, password, cipher_suite):
     cursor.execute("SELECT * FROM user WHERE user_name = %s", (user_name,))
     user_tuple = cursor.fetchone()
+    print(user_tuple.__str__() + cipher_suite.__str__())
     if user_tuple:
-        stored_password = decrypt_password(user_tuple[3], cipher_suite)
+        try:
+            stored_password = decrypt_password(user_tuple[3], cipher_suite)
+        except Exception as e:
+            print("Error: " + e.__str__())
+            return None, None
         if stored_password == password:
             user = User(user_tuple[0], user_tuple[1], user_tuple[2], stored_password)
             print(f"Authentification réussie pour l'utilisateur : {user}")
             return user, cipher_suite
         else:
             print("Mot de passe incorrect")
-            return None
+            return None, None
     else:
         print(f"L'utilisateur {user_name} non trouvé")
-        return None
+        return None, None
 
 
 def logout(user):
@@ -121,6 +127,7 @@ def logout(user):
     user.password = None
     user.key = None
     print(f"Utilisateur {user} déconnecté")
+    Db_con.commit()
 
 
 def update_user(user, cipher_suite):
@@ -128,6 +135,7 @@ def update_user(user, cipher_suite):
     cursor.execute("UPDATE user SET user_name = %s, address_mail = %s, password = %s WHERE id = %s",
                    (user.user_name, user.address_mail, encrypted_password, user.id))
     print(f"L'utilisateur {user} a été mis à jour")
+    Db_con.commit()
 
 
 def delete_user(user_id, password, cipher_suite):
@@ -142,6 +150,7 @@ def delete_user(user_id, password, cipher_suite):
             print("Mot de passe incorrect. Impossible de supprimer l'utilisateur.")
     else:
         print(f"Aucun utilisateur trouvé avec l'ID {user_id}.")
+    Db_con.commit()
 
 
 def add_site(uid, title, identifiant, password, url_site, notes, expiration_suggestion, cipher_suite):
@@ -156,6 +165,7 @@ def add_site(uid, title, identifiant, password, url_site, notes, expiration_sugg
         (uid, encrypted_title, encrypted_identifiant, encrypted_password, encrypted_url_site, encrypted_notes,
          expiration_suggestion))
     print(f"La donnée {title} a été ajoutée pour l'utilisateur avec uid {uid}")
+    Db_con.commit()
 
 
 def update_site(data, cipher_suite):
@@ -192,9 +202,33 @@ def get_all_sites(uid, cipher_suite):
         return None
 
 
-def get_specific_site(data_id, cipher_suite):
-    cursor.execute("SELECT * FROM data WHERE id = %s", (data_id,))
+def get_specific_site_id(data_id, uid, cipher_suite):
+    cursor.execute("SELECT * FROM data WHERE Id = %s AND Encrypted_Uid = %s", (data_id, uid))
+    print(data_id, uid)
     data_tuple = cursor.fetchone()
+    if data_tuple:
+        data = {
+            "id": data_tuple[0],
+            "encrypted_uid": data_tuple[1],
+            "title": decrypt_data(data_tuple[2], cipher_suite),
+            "identifiant": decrypt_data(data_tuple[3], cipher_suite),
+            "password": decrypt_data(data_tuple[4], cipher_suite),
+            "url_site": decrypt_data(data_tuple[5], cipher_suite),
+            "notes": decrypt_data(data_tuple[6], cipher_suite),
+            "expiration_suggestion": data_tuple[7]
+        } # Décryptage de la date
+        print(data)
+        return data
+    else:
+        print(f"Aucun site trouvé avec l'ID {data_id} pour l'utilisateur avec uid {uid}")
+        return "No site found"
+
+def get_specific_site_name(data_title, uid, cipher_suite):
+    encrypted_title = encrypt_data(data_title, cipher_suite)
+    print(encrypted_title)
+    cursor.execute("SELECT * FROM data WHERE Title = %s AND Encrypted_Uid = %s", (encrypted_title, uid))
+    data_tuple = cursor.fetchone()
+    print(data_tuple)
     if data_tuple:
         data = Data(data_tuple[0], data_tuple[1], decrypt_data(data_tuple[2], cipher_suite),
                     decrypt_data(data_tuple[3], cipher_suite), decrypt_data(data_tuple[4], cipher_suite),
@@ -203,12 +237,11 @@ def get_specific_site(data_id, cipher_suite):
         print(data)
         return data
     else:
-        print(f"Aucun site trouvé avec l'ID {data_id}")
-        return None
-
+        print(f"Aucun site trouvé avec le titre {data_title} pour l'utilisateur avec uid {uid}")
+        return "No site found"
 
 def delete_site(user_id, data_id, password, cipher_suite):
-    cursor.execute("SELECT * FROM user WHERE id = %s", (user_id,))
+    cursor.execute("SELECT * FROM user WHERE Id = %s", (user_id,))
     user_tuple = cursor.fetchone()
     if user_tuple:
         stored_password = decrypt_password(user_tuple[3], cipher_suite)
@@ -241,9 +274,17 @@ def delete_site(user_id, data_id, password, cipher_suite):
 # if not Db_con.is_connected():
 #     print('La connexion à la base de données a été fermée')
 
+
 app = Flask(__name__)
 
+app.config['Access-Control-Allow-Origin'] = '*'  # Allow all origins
+app.config['Access-Control-Allow-Methods'] = 'OPTIONS, GET, POST, PUT, DELETE'  # Allow all methods
+app.config['Access-Control-Allow-Headers'] = '*'  # Allow all headers
 
+app.config['CORS_HEADERS'] = 'Content-Type'
+
+
+CORS(app)
 # main API
 
 @app.route('/')
@@ -265,7 +306,8 @@ def connection_check_request():
 
 
 # create user
-# http://127.0.0.1:5000/create_user?user_name=alberic&address_mail=alberic@gmail.com&password=P@ssw0rd
+# http://127.0.0.1:5000/create_user?user_name=alberto&address_mail=alberic@gmail.com&password=P@ssw0rd
+# W08CEFd7ak3LQiZtCR323QO_BIQ1kJEPsv9AMTehhDU=
 @app.route('/create_user', methods=['POST'])
 def create_user_request():
     try:
@@ -274,11 +316,12 @@ def create_user_request():
         password = request.args.get('password')
         user, key = sign_up(user_name, address_mail, password)
         if user:
-            return user_name + ' has been created'
+            return key, user_name + ' has been created'
         else:
             return 'User already exists'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # update user
@@ -287,7 +330,8 @@ def update_user_request():
     try:
         return update_user(request.args.get('id'), request.args.get('user_name'))
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # delete user
@@ -308,7 +352,8 @@ def delete_user_request():
         else:
             return 'User not found'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # Signup
@@ -325,7 +370,8 @@ def signup_request():
         else:
             return 'User already exists'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # Login
@@ -333,15 +379,19 @@ def signup_request():
 @app.route('/login', methods=['POST'])
 def login_request():
     try:
+        # print(request.args.get('user_name'), request.args.get('password'), request.args.get('key'))
         user_name = request.args.get('user_name')
         password = request.args.get('password')
+        print(user_name, password, Fernet(request.args.get('key')))
         user, cipher_suite = login(user_name, password, Fernet(request.args.get('key')))
+        print(user, cipher_suite)
         if user:
             return 'Login successful'
         else:
             return 'Login failed'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # Logout
@@ -353,7 +403,8 @@ def logout_request():
         logout(user)
         return 'Logout successful'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # Sites API
@@ -364,33 +415,64 @@ def get_all_sites_request():
     try:
         sites = get_all_sites(request.args.get('uid'), Fernet(request.args.get('key')))
         if sites:
-            return jsonify(sites)
+            sites_return = []
+            for site in sites:
+                sites_return.append({
+                    "id": site.id,
+                    "encrypted_uid": site.encrypted_uid,
+                    "title": site.title,
+                    "identifiant": site.identifiant,
+                    "password": site.password,
+                    "url_site": site.url_site,
+                    "notes": site.notes,
+                    "expiration_suggestion": site.expiration_suggestion
+                })
+            return jsonify(sites_return)
         else:
             return 'No sites found'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # get specific site
 @app.route('/get_site', methods=['GET'])
 def get_site_request():
     try:
-        site = get_specific_site(request.args.get('data_id'), Fernet(request.args.get('key')))
-        return site
+        id = request.args.get('id')
+        title = request.args.get('title')
+        if id:
+            print('id: ' + id)
+            return get_specific_site_id(id, request.args.get('uid'), Fernet(request.args.get('key')))
+        elif title:
+            print('title: ' + title)
+            return get_specific_site_name(title, request.args.get('uid'), Fernet(request.args.get('key')))
+        else:
+            return 'No parameters found'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # create site
 @app.route('/create_site', methods=['POST'])
 def create_site_request():
     try:
+        print("uid " + request.args.get('uid'))
+        print("title " + request.args.get('title'))
+        print("identifiant " + request.args.get('identifiant'))
+        print("password " + request.args.get('password'))
+        print("url_site " + request.args.get('url_site'))
+        print("notes " + request.args.get('notes'))
+        print("expiration_suggestion " + request.args.get('expiration_suggestion'))
+        print("key " + request.args.get('key'))
         add_site(request.args.get('uid'), request.args.get('title'), request.args.get('identifiant'),
                  request.args.get('password'), request.args.get('url_site'), request.args.get('notes'),
                  request.args.get('expiration_suggestion'), Fernet(request.args.get('key')))
         return 'Site created'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # update site
@@ -400,7 +482,8 @@ def update_site_request():
         update_site(request.args.get('id'), request.args.get('encrypted_uid'))
         return 'Site updated'
     except Exception as e:
-        return e
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # delete site
@@ -411,8 +494,8 @@ def delete_site_request():
                     request.args.get('key'))
         return 'Site deleted'
     except Exception as e:
-        return e
-
+        print('Error: ' + e.__str__())
+        return 'Error: ' + e.__str__()
 
 
 # app running
