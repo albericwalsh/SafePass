@@ -11,6 +11,28 @@
     <link rel="stylesheet" href="css/button.css">
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+
+        async function register() {
+            const username = document.querySelector('input[placeholder="Username"]').value;
+            const email = document.querySelector('input[placeholder="mail"]').value;
+            const password = document.querySelector('input[placeholder="Password"]').value;
+            try {
+                const response = await fetch(`http://localhost:5000/signup?username=${encodeURIComponent(username)}&mail=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
+                    {
+                        method: 'POST'
+                    });
+                if (response.status === 200) {
+                    window.location.href = './register2.php?key=' + await response.text();
+                } else {
+                    alert('An error occurred');
+                }
+            } catch (e) {
+                alert('An error occurred');
+            }
+        }
+
+    </script>
 </head>
 <body>
 <header class="header d-flex align-items-center custom-shadow mb-6">
@@ -25,21 +47,21 @@
                 <span class="input-group-text"><img src="SVG/account.svg" alt="Icon" class="icon">
                 </span>
             <label>
-                <input type="text" class="form-control" placeholder="Username">
+                <input type="text" class="form-control" id="username" placeholder="Username">
             </label>
         </div>
         <div class=" custom-input-container input-group-prepend">
                 <span class="input-group-text"><img src="SVG/web.svg" alt="Icon" class="icon">
                 </span>
             <label>
-                <input type="text" class="form-control" placeholder="mail">
+                <input type="text" class="form-control" id="mail" placeholder="mail">
             </label>
         </div>
         <div class=" custom-input-container input-group-prepend">
                 <span class="input-group-text"><img src="SVG/password.svg" alt="Icon" class="icon">
                 </span>
             <label>
-                <input type="password" class="form-control" placeholder="Password">
+                <input type="password" class="form-control" id="password" placeholder="Password">
             </label>
         </div>
     </div>
@@ -47,7 +69,7 @@
         <div class="card-info" style="height: 400px">
             <h2 class="info-text">Use a simple Username for login, put your email and create a Password</h2>
         </div>
-        <button class="simple-button custom-shadow" onclick="window.location='register2.php'">
+        <button class="simple-button custom-shadow" onclick="register()">
             Continue
         </button>
     </div>

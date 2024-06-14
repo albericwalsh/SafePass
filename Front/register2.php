@@ -11,6 +11,24 @@
     <link rel="stylesheet" href="css/button.css">
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        const actual_URL = new URL(window.location.href).search;
+
+        const Key = String(actual_URL).split('key=')[1];
+        console.log(Key);
+
+        async function setKeyText() {
+            document.getElementById('key').textContent = Key || '';
+        }
+
+        window.onload = setKeyText;
+
+        async function copyKey() {
+            const key = document.getElementById('key').textContent;
+            navigator.clipboard.writeText(key);
+            alert('Key copied to clipboard');
+        }
+    </script>
 </head>
 <body>
 <header class="header d-flex align-items-center custom-shadow mb-6">
@@ -19,28 +37,30 @@
         <h1 class="title">NOTE YOUR SUPER PASSWORD</h1>
     </div>
 </header>
-<div class="custom-container"
-">
-<div class="col-65">
-    <div class=" custom-input-container input-group-prepend">
-                <span class="input-group-text"><img src="SVG/password.svg" alt="Icon" class="icon">
-                </span>
-        <label>
-            <h1 class="form-control">i3CMu5se2U3Ty4</h1>
-        </label>
+<div class="custom-container">
+    <div class="col-65">
+        <div class=" custom-input-container input-group-prepend" style="width: 90%">
+            <span class="input-group-text"><img src="SVG/password.svg" alt="Icon" class="icon">
+            </span>
+            <div class="scroll-box" style="width: 100%; overflow-y: clip; overflow-x: auto">
+                <label>
+                    <h1 class="form-control" style="white-space: nowrap;" id="key"></h1>
+                </label>
+            </div>
+        </div>
+        <button class="simple-button custom-shadow" style="background-color: var(--couleur-info)" onclick="copyKey()">
+            Copy
+        </button>
     </div>
-    <button class="simple-button custom-shadow" style="background-color: var(--couleur-info)" onclick="window.location='register2.php'">
-        Copy
-    </button>
-</div>
-<div class="col-35" style="align-content: flex-end">
-    <div class="card-info" style="height: 400px">
-        <h2 class="info-text">This is your single super password for unlock all other passwords. Do not share it. If you
-            loose it, you loose all your data.</h2>
+    <div class="col-35" style="align-content: flex-end">
+        <div class="card-info" style="height: 400px">
+            <h2 class="info-text">This is your single super password for unlock all other passwords. Do not share it. If
+                you
+                loose it, you loose all your data.</h2>
+        </div>
+        <button class="simple-button custom-shadow" onclick="window.location='login.php'">
+            Continue
+        </button>
     </div>
-    <button class="simple-button custom-shadow" onclick="window.location='login.php'">
-        Continue
-    </button>
-</div>
 </body>
 </html>

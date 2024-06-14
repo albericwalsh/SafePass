@@ -45,12 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 const response = await fetch(url, {method: 'POST'});
                 const result = await response.text();
 
-
-                if (result.includes('Login successful')) {
+                console.log(result);
+                if (!result.includes('Login failed')) {
                     alert('Login successful')
+                    const id = result.split('"id": ')[1].split(',')[0];
+                    console.log(id);
 
                     // Set cookies for username and key
-                    setCookie('uid', 1, sessionStorage); // Cookie expires in 7 days
+                    setCookie('uid', id, sessionStorage); // Cookie expires in 7 days
                     setCookie('key', key, sessionStorage); // Cookie expires in 7 days
 
                     // Assuming your PHP script is on the same domain and sets the session/cookie

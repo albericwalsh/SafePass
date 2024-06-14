@@ -18,50 +18,97 @@
         function getCookie(name) {
             let value = "; " + document.cookie + "=";
             const parts = value.split(`; ${name}=`);
-            value = parts.pop().split(';').shift();
-            // if (parts.length === 2) return parts.pop().split(';');
-            return value;
+            if (parts.length === 2) return parts.pop().split(';').shift();
         }
-        const uid = getCookie('uid');
-        const key = getCookie('key');
 
-        //url params title
-        const id = new URLSearchParams(window.location.search).get('site');
-        async function GetValues() {
+        //url get parameter id
+        const actual_URL = new URL(window.location.href).search;
 
-            console.log(id + " - " + key);
-            const url = `http://localhost:5000/get_site?id=${encodeURIComponent(id)}&key=${encodeURIComponent(key)}`;
+        const Id = String(actual_URL).split('=')[1];
+        let Title = '';
 
-            try {
-                const response = await fetch(url);
-                console.log(response);
-                //contains Aucun site trouvé
-                if (response === "No site found") {
-                    alert("No site found");
-                    return "No site found"
-                } else {
-                    const result = await response.json();
-                    console.log(result);
-
-                    if (result.error) {
-                        alert('Error: ' + result.error);
-                    }else {
-                        document.getElementById('url').value = result.url;
-                        document.getElementById('username').value = result.username;
-                        document.getElementById('password').value = result.password;
-                        document.getElementById('notes').innerHTML = result.notes;
-                        document.getElementById('date').innerHTML = result.expiration;
+        async function fetchAndSetData() {
+            const uid = getCookie('uid');
+            const key = getCookie('key');
+            console.log(actual_URL + " - " + key + " - " + uid);
+            if (Id === "-1") {
+                document.getElementById('url').value = '';
+                document.getElementById('username').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('notes').textContent = '';
+                document.getElementById('date').textContent = '';
+            }else {
+                try {
+                    const response = await fetch(`http://localhost:5000/get_site?id=${encodeURIComponent(Id)}&key=${encodeURIComponent(key)}&uid=${encodeURIComponent(uid)}`);
+                    if (!response.ok) {
+                        new Error('Network response was not ok ' + response.statusText);
                     }
+                    const data = await response.json();
 
-
+                    // Assuming data contains the fields 'url', 'username', 'password', and 'notes'
+                    Title = data.title;
+                    document.getElementById('url').value = data.url_site || '';
+                    document.getElementById('username').value = data.identifiant || '';
+                    document.getElementById('password').value = data.password || '';
+                    document.getElementById('notes').textContent = data.notes || '';
+                    document.getElementById('date').textContent = data.expiration_suggestion || '';
+                    console.log(data);
+                } catch (error) {
+                    console.error('There has been a problem with your fetch operation:', error);
                 }
-            } catch (error) {
-                console.error('Error during login:', error);
-                alert('Error during login: ' + error);
             }
         }
 
-        GetValues();
+        // Call the function when the page loads
+        window.onload = fetchAndSetData;
+
+
+        async function saveData() {
+            const key = getCookie('key');
+            const url = document.getElementById('url').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const notes = document.getElementById('notes').textContent;
+            const expiration = document.getElementById('date').textContent;
+
+            const data = {
+                title: Title,
+                url_site: url,
+                identifiant: username,
+                password: password,
+                notes: notes,
+                expiration_suggestion: expiration,
+                id: Id,
+                encrypted_uid: getCookie('uid')
+            };
+
+
+            try {
+                console.log(data);
+
+                if (Id === "-1") {
+                    const response = await fetch(`http://localhost:5000/create_site?uid=${encodeURIComponent(data.encrypted_uid)}&title=${encodeURIComponent(data.url_site)}&identifiant=${encodeURIComponent(data.identifiant)}&password=${encodeURIComponent(data.password)}&url_site=${encodeURIComponent(data.url_site)}&notes=${encodeURIComponent(data.notes)}&expiration_suggestion=10/12/2024&key=${encodeURIComponent(key)}`, {
+                        method: 'POST'
+                    });
+                    if (!response.ok) {
+                        new Error('Network response was not ok ' + response.statusText);
+                    }
+                    console.log(response);
+                    window.location.href = './home.php';
+                }else {
+                    const response = await fetch(`http://localhost:5000/update_site?data=${encodeURIComponent(JSON.stringify(data))}&key=${encodeURIComponent(key)}`, {
+                        method: 'PUT'
+                    });
+                    if (!response.ok) {
+                        new Error('Network response was not ok ' + response.statusText);
+                    }
+                    console.log(response);
+                    window.location.href = './home.php';
+                }
+            } catch (error) {
+                console.error('There has been a problem with your fetch operation:', error);
+            }
+        }
 
     </script>
 </head>
@@ -100,7 +147,7 @@
                 <span class="input-group-text"><img src="SVG/password.svg" alt="Icon" class="icon">
                 </span>
             <label>
-                <input type="password" id="password" class="form-control" placeholder="Password">
+                <input type="text" id="password" class="form-control" placeholder="Password">
             </label>
         </div>
         <br>
@@ -116,12 +163,12 @@
             <div class="col-45">
                 <button class="simple-button custom-shadow"
                         style="background-color: var(--couleur-warning); color: var(--couleur-black)"
-                        onclick="window.location='home.php'">
+                        onclick="window.location='./home.php'">
                     Cancel
                 </button>
             </div>
             <div class="col-50">
-                <button class="simple-button custom-shadow" onclick="window.location='home.php'">
+                <button class="simple-button custom-shadow" onclick="saveData()">
                     Save
                 </button>
             </div>

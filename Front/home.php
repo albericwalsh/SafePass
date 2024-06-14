@@ -28,7 +28,7 @@
             card.className = 'long-button';
             card.style = 'color: var(--couleur-dark), box-shadow: 0 8px 8px rgba(0, 0, 0, 0.25);';
             card.onclick = () => {
-                window.location.href = './modify.php?/site=' + site.id;
+                window.location.href = './modify.php?id=' + site.id;
             };
             card.innerHTML = `
                 <div class="card-body" style="display: flex">
@@ -63,7 +63,7 @@
 
                     if (result.error) {
                         alert('Error: ' + result.error);
-                    }else {
+                    } else {
                         for (let i = 0; i < result.length; i++) {
                             const card = createCard(result[i]);
                             document.getElementById('results-container').appendChild(card);
@@ -76,6 +76,14 @@
                 console.error('Error during fetching cards:', error);
                 alert('Error during fetching cards: ' + error);
             }
+        }
+
+        async function logout() {
+            // set time cookies to -1
+            document.cookie = "uid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "key=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            window.location.href = './login.php';
+
         }
 
     </script>
@@ -97,17 +105,23 @@
 </header>
 <div class="custom-container">
     <div class="col-65">
-        <div class="scroll-box" id="results-container">
+        <div class="scroll-box" style="height: 600px" id="results-container">
             <script>
                 getAllCards();
             </script>
         </div>
     </div>
     <div class="col-25">
-        <div class="simple-container flex">
-            <img src="SVG/add.svg" alt="Icon" class="icon" style="margin: 0 8%">
-            <img src="SVG/remove.svg" alt="Icon" class="icon" style="margin: 0 8%">
-            <img src="SVG/logout.svg" alt="Icon" class="icon" style="margin: 0 8%">
+        <div class="simple-container flex" style="">
+            <button class="simple-button custom-shadow" onclick="window.location='./modify.php?id=-1'">
+                <img src="SVG/add.svg" alt="Icon" class="icon" >
+            </button>
+            <button class="simple-button custom-shadow" onclick="window.location='./modify.php?id=-1'">
+            <img src="SVG/remove.svg" alt="Icon" class="icon" >
+            </button>
+            <button class="simple-button custom-shadow" onclick="logout()">
+            <img src="SVG/logout.svg" alt="Icon" class="icon" >
+            </button>
         </div>
     </div>
 </div>

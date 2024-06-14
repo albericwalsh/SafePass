@@ -1,7 +1,10 @@
+import json
+
 import mysql.connector
 from cryptography.fernet import Fernet
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from json import JSONEncoder
 
 debug = ""
 
@@ -169,18 +172,22 @@ def add_site(uid, title, identifiant, password, url_site, notes, expiration_sugg
 
 
 def update_site(data, cipher_suite):
-    encrypted_title = encrypt_data(data.title, cipher_suite)
-    encrypted_identifiant = encrypt_data(data.identifiant, cipher_suite)
-    encrypted_password = encrypt_password(data.password, cipher_suite)
-    encrypted_url_site = encrypt_data(data.url_site, cipher_suite)
-    encrypted_notes = encrypt_data(data.notes, cipher_suite)
-    expiration_suggestion = data.expiration_suggestion
+    try:
+        encrypted_title = encrypt_data(data.title.__str__(), cipher_suite)
+        encrypted_identifiant = encrypt_data(data.identifiant.__str__(), cipher_suite)
+        encrypted_password = encrypt_password(data.password.__str__(), cipher_suite)
+        encrypted_url_site = encrypt_data(data.url_site.__str__(), cipher_suite)
+        encrypted_notes = encrypt_data(data.notes.__str__(), cipher_suite)
+        expiration_suggestion = data.expiration_suggestion.__str__()
 
-    cursor.execute(
-        "UPDATE data SET encrypted_uid = %s, title = %s, identifiant = %s, password = %s, url_site = %s, notes = %s, expiration_suggestion = %s WHERE id = %s",
-        (data.encrypted_uid, encrypted_title, encrypted_identifiant, encrypted_password, encrypted_url_site,
-         encrypted_notes, expiration_suggestion, data.id))
-    print(f"La donnée {data} a été mise à jour")
+        cursor.execute(
+            "UPDATE data SET encrypted_uid = %s, title = %s, identifiant = %s, password = %s, url_site = %s, notes = %s, expiration_suggestion = %s WHERE id = %s",
+            (data.encrypted_uid, encrypted_title, encrypted_identifiant, encrypted_password, encrypted_url_site,
+             encrypted_notes, expiration_suggestion, data.id))
+        print(f"La donnée {data} a été mise à jour")
+    except Exception as e:
+        print("Error: " + e.__str__())
+
 
 
 def get_all_sites(uid, cipher_suite):
@@ -204,8 +211,9 @@ def get_all_sites(uid, cipher_suite):
 
 def get_specific_site_id(data_id, uid, cipher_suite):
     cursor.execute("SELECT * FROM data WHERE Id = %s AND Encrypted_Uid = %s", (data_id, uid))
-    print(data_id, uid)
+    print("id: " + data_id + " | uid: " + uid)
     data_tuple = cursor.fetchone()
+    print(data_tuple)
     if data_tuple:
         data = {
             "id": data_tuple[0],
@@ -216,28 +224,11 @@ def get_specific_site_id(data_id, uid, cipher_suite):
             "url_site": decrypt_data(data_tuple[5], cipher_suite),
             "notes": decrypt_data(data_tuple[6], cipher_suite),
             "expiration_suggestion": data_tuple[7]
-        } # Décryptage de la date
+        }  # Décryptage de la date
         print(data)
         return data
     else:
         print(f"Aucun site trouvé avec l'ID {data_id} pour l'utilisateur avec uid {uid}")
-        return "No site found"
-
-def get_specific_site_name(data_title, uid, cipher_suite):
-    encrypted_title = encrypt_data(data_title, cipher_suite)
-    print(encrypted_title)
-    cursor.execute("SELECT * FROM data WHERE Title = %s AND Encrypted_Uid = %s", (encrypted_title, uid))
-    data_tuple = cursor.fetchone()
-    print(data_tuple)
-    if data_tuple:
-        data = Data(data_tuple[0], data_tuple[1], decrypt_data(data_tuple[2], cipher_suite),
-                    decrypt_data(data_tuple[3], cipher_suite), decrypt_data(data_tuple[4], cipher_suite),
-                    decrypt_data(data_tuple[5], cipher_suite), decrypt_data(data_tuple[6], cipher_suite),
-                    data_tuple[7])  # Décryptage de la date
-        print(data)
-        return data
-    else:
-        print(f"Aucun site trouvé avec le titre {data_title} pour l'utilisateur avec uid {uid}")
         return "No site found"
 
 def delete_site(user_id, data_id, password, cipher_suite):
@@ -283,8 +274,9 @@ app.config['Access-Control-Allow-Headers'] = '*'  # Allow all headers
 
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-
 CORS(app)
+
+
 # main API
 
 @app.route('/')
@@ -361,12 +353,12 @@ def delete_user_request():
 @app.route('/signup', methods=['POST'])
 def signup_request():
     try:
-        user_name = request.args.get('user_name')
-        address_mail = request.args.get('address_mail')
+        user_name = request.args.get('username')
+        address_mail = request.args.get('mail')
         password = request.args.get('password')
         user, key = sign_up(user_name, address_mail, password)
         if user:
-            return '"' + key + '" | User ' + user_name + ' has been created'
+            return key
         else:
             return 'User already exists'
     except Exception as e:
@@ -386,7 +378,7 @@ def login_request():
         user, cipher_suite = login(user_name, password, Fernet(request.args.get('key')))
         print(user, cipher_suite)
         if user:
-            return 'Login successful'
+            return jsonify(user.__dict__)
         else:
             return 'Login failed'
     except Exception as e:
@@ -440,13 +432,8 @@ def get_all_sites_request():
 def get_site_request():
     try:
         id = request.args.get('id')
-        title = request.args.get('title')
         if id:
-            print('id: ' + id)
             return get_specific_site_id(id, request.args.get('uid'), Fernet(request.args.get('key')))
-        elif title:
-            print('title: ' + title)
-            return get_specific_site_name(title, request.args.get('uid'), Fernet(request.args.get('key')))
         else:
             return 'No parameters found'
     except Exception as e:
@@ -479,7 +466,13 @@ def create_site_request():
 @app.route('/update_site', methods=['PUT'])
 def update_site_request():
     try:
-        update_site(request.args.get('id'), request.args.get('encrypted_uid'))
+        json_dict = json.loads(request.args.get('data'))
+        print("data json: ", json_dict)
+        dict = Data(json_dict['id'], json_dict['encrypted_uid'], json_dict['title'], json_dict['identifiant'],
+                    json_dict['password'], json_dict['url_site'], json_dict['notes'], json_dict['expiration_suggestion'])
+        print("dict: ", dict)
+        update_site(dict, Fernet(request.args.get('key')))
+        Db_con.commit()
         return 'Site updated'
     except Exception as e:
         print('Error: ' + e.__str__())
