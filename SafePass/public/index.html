@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafePass</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://api.icons8.com/icons?api_key=ton_clé_api&format=standart">
+    <link rel="stylesheet" type="text/css" href="/style/style.css">
+    <link rel="stylesheet" type="text/css" href="/style/table.css">
+    <link rel="stylesheet" type="text/css" href="/style/colors.css">
+    <link rel="stylesheet" type="text/css" href="/style/font.css">
+</head>
+<body>
+<header class="navbar navbar-dark sp-bg-dark fixed-top">
+    <div class="header-content">
+        <a class="navbar-brand" href="#">SafePass</a>
+        <div class="search-bar-header">
+            <button class="btn sp-btn" id="settings-button">Paramètres</button>
+        </div>
+    </div>
+</header>
+<div class="container-fluid">
+    <div class="row">
+        <nav class="col-md-2 d-none d-md-block sidebar sp-bg-medium">
+            <div class="sidebar-sticky">
+                <ul class="nav flex-column" style="margin-top: 56px;">
+                    <li class="nav-item d-flex justify-content-between align-items-center">
+                        <a class="nav-link sp-link" href="#" data-category="sites">Sites</a>
+                        <button class="btn sp-btn add-btn" data-category="sites">Add</button>
+                    </li>
+                    <li class="nav-item d-flex justify-content-between align-items-center">
+                        <a class="nav-link sp-link" href="#" data-category="applications">Applications</a>
+                        <button class="btn sp-btn add-btn" data-category="applications">Add</button>
+                    </li>
+                    <li class="nav-item d-flex justify-content-between align-items-center">
+                        <a class="nav-link sp-link" href="#" data-category="autres">Autres</a>
+                        <button class="btn sp-btn add-btn" data-category="autres">Add</button>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            <div class="search-bar">
+                <label for="search-input"></label><input class="form-control mb-3" id="search-input" type="text"
+                                                         placeholder="Rechercher...">
+            </div>
+            <table class="table sp-table" id="dynamic-table">
+                <thead>
+                <tr id="table-headers">
+                    <!-- Dynamic headers -->
+                </tr>
+                </thead>
+                <tbody id="dynamic-list">
+                <!-- Dynamic content will be inserted here -->
+                </tbody>
+            </table>
+        </main>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="/js/display.js"></script>
+<script src="/js/saving.js"></script>
+<script src="/js/password.js"></script>
+<script src="/js/alert.js"></script>
+<script src="/js/tools.js"></script>
+<script>
+    let allData = []; // Store all data for search
+    let currentCategory = 'sites'; // Default category
+    let sortOrder = {}; // Object to track sort orders
+    let deleteCancelTmp = null; // Temporary variable to store the delete cancel function
+
+    $(document).ready(function () {
+        // Load all data
+        loadAllData();
+
+        // Attach sorting event listener
+        $('#table-headers').on('click', '.sortable', function () {
+            let columnKey = $(this).data('key');
+            sortTable(columnKey);
+
+            // Reset all sort icons
+            $('.sort-icon').html('&#10606;');
+
+            // Update sort icon for the current column
+            $(this).find('.sort-icon').html(sortOrder[columnKey] === 'asc' ? '&#8639;' : '&#8642;');
+        });
+
+        // Change category on button click
+        $('.nav-link').on('click', function () {
+            $('.nav-link').removeClass('active');
+            $(this).addClass('active');
+            let category = $(this).data('category');
+            displayCategory(category);
+        });
+
+        // Active category search filter
+        $('#search-input').on('input', function () {
+            let value = $(this).val().toLowerCase();
+            $('#dynamic-list tr').filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
+
+
+// Add new item to the current category
+        $('.add-btn').on('click', function () {
+            let category = $(this).data('category');
+            showAddForm(category);
+        });
+
+        // Paramètres
+        $('#settings-button').on('click', function () {
+            showParameters();
+        });
+
+    });
+</script>
+</body>
+</html>

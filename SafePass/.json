@@ -1,0 +1,87 @@
+[
+  {
+    "sites": [
+      {
+        "name": "google",
+        "url": "https://www.google.com/",
+        "username": "albericwdsrt@gmail.com",
+        "password": "6ud3c6B9b)X,+B"
+      },
+      {
+        "name": "google",
+        "url": "https://www.google.com/",
+        "username": "albert85boss@gmail.com",
+        "password": "y288h%L7RkcC_}"
+      },
+      {
+        "name": "google",
+        "url": "https://www.google.com/",
+        "username": "broawz.n.nove@gmail.com",
+        "password": "9/*pMR4me4+Es2"
+      },
+      {
+        "name": "steam",
+        "url": "https://store.steampowered.com/?l=french",
+        "username": "broawz_n_nove",
+        "password": "?5dzzX7.Qy3(9T"
+      },
+      {
+        "name": "Github",
+        "url": "https://github.com/",
+        "username": "albericwdsrt@gmail.com",
+        "password": "BnH/~*65xFy2v9"
+      },
+      {
+        "name": "JetBrain",
+        "url": "https://www.jetbrains.com/fr-fr/",
+        "username": "alberic.walshdeserrant@ynov.com",
+        "password": "TBw455-iX7na=]"
+      },
+      {
+        "name": "Paypal",
+        "url": "https://www.paypal.com/",
+        "username": "albericwdsrt@gmail.com",
+        "password": "c*7[p5G3uWW^k2"
+      },
+      {
+        "name": "Urssaf",
+        "url": "https://www.autoentrepreneur.urssaf.fr/services/espace-personnel",
+        "username": "1030435288305",
+        "password": "J6:S6ng6i@qQ6%"
+      },
+      {
+        "name": "Mobilijeune",
+        "url": "https://www.autoentrepreneur.urssaf.fr/services/espace-personnel",
+        "username": "albericwdsrt@gmail.com",
+        "password": "MB$r7?u#$dQXPRXt"
+      },
+      {
+        "name": "Impot - espace pro",
+        "url": "https://inscriptionpro.impots.gouv.fr/",
+        "username": "albericwdsrt@gmail.com",
+        "password": "Wz~^2D7nSy+9(F5_3tkL"
+      },
+      {
+        "name": "edf",
+        "url": "https://espace-client.edf.fr/",
+        "username": "albericwdsrt@gmail.com",
+        "password": "bud3,+66BBcX)9"
+      }
+    ],
+    "applications": [
+      {
+        "name": "Adobe Photoshop",
+        "GUID": "550e8400-e29b-41d4-a716-446655440000",
+        "username": "user_photoshop",
+        "password": "password321"
+      }
+    ],
+    "autres": [
+      {
+        "name": "Home WiFi",
+        "username": "user_wifi",
+        "password": "wifi12345"
+      }
+    ]
+  }
+]

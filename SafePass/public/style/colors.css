@@ -1,0 +1,78 @@
+:root {
+    --sp-text: #030f11;
+    --sp-dark: #213236;
+    --sp-medium: #476870;
+    --sp-light: #DCE8EB;
+    --sp-info: #005a70;
+    --sp-success: #4ff45e;
+    --sp-alert: #f4b24f;
+    --sp-error: #f44f4f;
+}
+
+.sp-bg-dark {
+    background-color: var(--sp-dark);
+    color: var(--sp-light);
+}
+
+.sp-bg-medium {
+    background-color: var(--sp-medium);
+    color: var(--sp-light);
+}
+
+.sp-bg-light {
+    background-color: var(--sp-light);
+    color: var(--sp-text);
+}
+
+.sp-bg-info {
+    background-color: var(--sp-info);
+    color: var(--sp-text);
+}
+
+.sp-bg-success {
+    background-color: var(--sp-success);
+    color: var(--sp-text);
+}
+
+.sp-bg-alert {
+    background-color: var(--sp-alert);
+    color: var(--sp-text);
+}
+
+.sp-bg-error {
+    background-color: var(--sp-error);
+    color: var(--sp-light);
+}
+
+.sp-dark {
+    color: var(--sp-dark);
+}
+
+.sp-medium {
+    color: var(--sp-medium);
+}
+
+.sp-light {
+    color: var(--sp-light);
+}
+
+.sp-info {
+    color: var(--sp-info);
+}
+
+.sp-success {
+    color: var(--sp-success);
+}
+
+.sp-alert {
+    color: var(--sp-alert);
+}
+
+.sp-error {
+    color: var(--sp-error);
+}
+
+.sp-text {
+    border: 1px solid var(--sp-text);
+}
+

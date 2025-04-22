@@ -1,0 +1,67 @@
+[
+  {
+    "sites": [
+      {
+        "name": "Google",
+        "url": "https://www.google.com",
+        "username": "user_google",
+        "password": "password123"
+      },
+      {
+        "name": "Facebook",
+        "url": "https://www.facebook.com",
+        "username": "user_facebook",
+        "password": "password456"
+      },
+      {
+        "name": "Twitter",
+        "url": "https://www.twitter.com",
+        "username": "user_twitter",
+        "password": "password789"
+      },
+      {
+        "name": "youtube",
+        "url": "www.youtube.com",
+        "username": "alberic",
+        "password": "aaaa"
+      }
+    ],
+    "applications": [
+      {
+        "name": "Adobe Photoshop",
+        "GUID": "550e8400-e29b-41d4-a716-446655440000",
+        "username": "user_photoshop",
+        "password": "password321"
+      },
+      {
+        "name": "Microsoft Word",
+        "GUID": "660f8400-f29b-52d4-b717-557655550001",
+        "username": "user_word",
+        "password": "password654"
+      },
+      {
+        "name": "Slack",
+        "GUID": "770g8500-g39c-63e4-c818-668755660002",
+        "username": "user_slack",
+        "password": "password987"
+      }
+    ],
+    "autres": [
+      {
+        "name": "Home WiFi",
+        "username": "user_wifi",
+        "password": "wifi12345"
+      },
+      {
+        "name": "Netflix",
+        "username": "user_netflix",
+        "password": "netflix123"
+      },
+      {
+        "name": "Amazon Prime",
+        "username": "user_amazon",
+        "password": "amazon123"
+      }
+    ]
+  }
+]
