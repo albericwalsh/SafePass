@@ -1,5 +1,10 @@
 Set WshShell = CreateObject("WScript.Shell")
-WshShell.Run "node ./index.js", 0
-WshShell.Run "pip install flask", 0
-WshShell.Run "python -m flask run --no-debug --no-debugger", 0
 
+' Définit le dossier backend
+WshShell.CurrentDirectory = "C:\Users\alber\Documents\Informatique\php\SafePass 1.0\SafePass"
+
+' Lancer frontend
+WshShell.Run "node index.js", 0
+
+' Lancer backend
+WshShell.Run "py.exe SafePass.py", 0

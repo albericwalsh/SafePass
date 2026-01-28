@@ -1,10 +1,16 @@
-
 function displayCategory(category) {
     currentCategory = category;
     let tableHeaders = $('#table-headers');
     let tableBody = $('#dynamic-list');
     tableHeaders.empty();
     tableBody.empty();
+
+    console.log("currentCategory:", currentCategory);
+
+    if (!Array.isArray(allData)) {
+        console.error("allData is not an array:", allData);
+        return;
+    }
 
     if (allData.length && allData[0][category].length) {
         let headers = ['name', 'url', 'GUID', 'username', 'password'];
@@ -41,6 +47,7 @@ function displayCategory(category) {
         tableHeaders.append('<th class="resizable">Edit</th>');
     }
 
+
     allData.forEach(item => {
         if (item[category]) {
             item[category].forEach(entry => {
@@ -50,34 +57,23 @@ function displayCategory(category) {
                     if (entry[key] !== undefined) {
                         if (key === 'name') {
                             let favicon = '';
-                            if (category === 'applications') {
-                                // Utilisation de l'API Icons8 pour obtenir une icône
-                                fetch(`https://api.icons8.com/icons/search?api_key=ton_clé_api&term=${entry[key]}`, {
-                                    method: 'GET',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    }
-                                })
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        if (data.icons.length > 0) {
-                                            favicon = `<img src="${data.icons[0].png}" alt="Icon" style="width: 16px; height: 16px; margin-right: 8px;">`;
-                                        } else {
-                                            favicon = '<i class="fas fa-file"></i>';
-                                        }
-                                    })
-                                    .catch(error => console.error('Error:', error));
-                            } else if (key === 'name') {
-                                favicon = entry.url ? `https://www.google.com/s2/favicons?domain=${entry.url}` : '<i class="fas fa-file"></i>';
-                                favicon = favicon.startsWith('http') ? `<img src="${favicon}" alt="favicon" style="width: 16px; height: 16px; margin-right: 8px;">` : favicon;
+
+                            if (category !== 'applications') {
+                                favicon = entry.url
+                                    ? `https://www.google.com/s2/favicons?domain=${entry.url}`
+                                    : '';
+
+                                favicon = favicon
+                                    ? `<img src="${favicon}" alt="favicon" style="width: 16px; height: 16px; margin-right: 8px;">`
+                                    : '';
                             }
 
                             row.append(`
-                                <td class="resizable" data-key="${key}">
-                                    ${favicon}
-                                    ${entry[key]}
-                                </td>
-                            `);
+                                    <td class="resizable" data-key="${key}">
+                                        ${favicon}
+                                        ${entry[key]}
+                                    </td>
+                                `);
                         } else if (key === 'url') {
                             row.append(`<td class="resizable" data-key="${key}"><a href="${entry[key]}" target="_blank">${entry[key]}</a></td>`);
                         } else if (key === 'username') {
@@ -385,7 +381,7 @@ function showParameters() {
     $('body').append(backdropHtml, formHtml);
 
     // Handle file export
-    document.getElementById('exportButton').addEventListener('click', function() {
+    document.getElementById('exportButton').addEventListener('click', function () {
         try {
             let dataStr = allData;
             console.log('Exporting data:', dataStr);
@@ -398,7 +394,7 @@ function showParameters() {
     });
 
     // Handle file upload
-    $('#fileUpload').on('change', function() {
+    $('#fileUpload').on('change', function () {
         const file = $(this)[0].files[0]; // Access the selected file
         try {
             if (file) {

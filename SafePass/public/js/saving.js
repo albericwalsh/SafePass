@@ -2,6 +2,7 @@
 function saveAllData() {
     try {
         console.log('Data saved:', allData);
+
         $.ajax({
             url: 'http://127.0.0.1:5000/saveData',
             type: 'POST',
@@ -9,7 +10,10 @@ function saveAllData() {
             contentType: 'application/json; charset=utf-8',
             dataType: 'json',
             success: function(response) {
-                console.log('Les données ont été sauvegardées avec succès.');
+                console.log('Sauvegarde OK');
+
+                // ✅ RECHARGER APRÈS la sauvegarde
+                loadAllData();
             },
             error: function(error) {
                 console.error('Échec de la sauvegarde des données: ', error);
@@ -21,24 +25,52 @@ function saveAllData() {
 }
 
 
+
 function loadAllData() {
     try {
         $.ajax({
-            url: 'http://127.0.0.1:5000/getData', // Assure-toi que l'URL correspond à ton endpoint Flask
+            url: 'http://127.0.0.1:5000/getData',
             type: 'GET',
             dataType: 'json',
-            success: function (data) {
-                allData = data;
-                displayCategory(currentCategory); // Affiche initialement la catégorie 'sites'
-                console.log('Données chargées:', allData);
-                showAlertMessage("Données chargées avec succès.");
+            success: function (response) {
+                console.log("Réponse brute serveur :", response);
+                console.log("Type de response.data:", typeof response.data);
+                console.log("Est un Array?", Array.isArray(response.data));
+
+                // ✅ Gestion unifiée
+                if (response.status === 'success') {
+                    if (Array.isArray(response.data)) {
+                        allData = response.data;
+                        console.log('✅ Données chargées (array):', allData);
+                    } else if (response.data && typeof response.data === 'object') {
+                        // Si c'est un objet, le mettre dans un tableau
+                        allData = [response.data];
+                        console.log('✅ Données chargées (object->array):', allData);
+                    } else {
+                        console.warn('⚠️ Format inattendu, initialisation vide');
+                        allData = [{
+                            sites: [],
+                            applications: [],
+                            autres: []
+                        }];
+                    }
+                } else {
+                    console.error("❌ Réponse sans status success");
+                    allData = [{
+                        sites: [],
+                        applications: [],
+                        autres: []
+                    }];
+                }
+
+                displayCategory(currentCategory);
+                console.log('Affichage de la catégorie:', currentCategory);
+
             },
             error: function (error) {
                 console.error('Erreur lors du chargement des données:', error);
-                STATUS = error.status;
-                if (error.status === 0){
-                    STATUS = "Erreur de connexion";
-                }
+                let STATUS = error.status || "Erreur inconnue";
+                if (error.status === 0) STATUS = "Erreur de connexion";
                 showAlertMessage("Erreur lors du chargement des données: " + STATUS, '--sp-error');
             }
         });
@@ -46,6 +78,7 @@ function loadAllData() {
         console.error('Erreur lors du chargement des données', e);
     }
 }
+
 
 function decryptData(Data) {
     try {
