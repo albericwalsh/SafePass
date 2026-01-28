@@ -354,18 +354,71 @@ function showEditForm(category, entry) {
 function showParameters() {
     const backdropHtml = '<div class="backdrop" id="backdrop"></div>';
     const formFields = `
-        <div class="file-input">
-            <label for="filePath" style="margin-right: 10px">Importer un fichier:</label>
-            <label for="fileUpload" class="browse-icon">
-                <i class="fas fa-folder-open"></i>
-            </label>
-            <input type="file" id="fileUpload" name="fileUpload" accept=".sfpss" style="display: none;">
-        </div>
-        <div class="file-input">
-            <!-- Export Button -->
-            <button id="exportButton" class="export-icon" style="margin-left: 10px;">
-                <i class="fas fa-file-export"></i> Exporter
-            </button>
+        <div id="settings-container" style="width:600px; max-width:95%;">
+            <h3>Général</h3>
+            <div class="settings-grid">
+                <div class="settings-row"><label>Langue</label><select id="language"><option value="fr">Français</option><option value="en">English</option></select></div>
+                <div class="settings-row"><label></label><label><input type="checkbox" id="start_on_boot"> Démarrer au démarrage</label></div>
+                <div class="settings-row"><label></label><label><input type="checkbox" id="auto_update_check"> Vérifier mises à jour automatiquement</label></div>
+                <div class="settings-row"><label></label><label><input type="checkbox" id="open_front_on_start"> Ouvrir le front au démarrage</label></div>
+            </div>
+
+            <h3>Sécurité</h3>
+            <div class="settings-grid">
+                <div class="settings-row"><label></label><label><input type="checkbox" id="master_password_enabled"> Exiger mot de passe maître</label></div>
+                <div class="settings-row"><label>Verrouillage automatique (minutes)</label><input type="number" id="auto_lock_minutes" min="0" style="width:120px"></div>
+                <div class="settings-row"><label>Politique force mot de passe</label>
+                    <select id="password_strength_policy"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+                </div>
+                <div class="settings-row"><label></label><label><input type="checkbox" id="require_password_on_export"> Demander mot de passe pour export</label></div>
+            </div>
+
+            <h3>Stockage & Sauvegardes</h3>
+            <div class="settings-grid">
+                <div class="settings-row"><label>Chemin données</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="data_path" style="flex:1">
+                        <button type="button" id="browseData" class="btn">Parcourir</button>
+                    </div>
+                </div>
+                    <div class="settings-row"><label></label><label><input type="checkbox" id="backup_enabled"> Activer sauvegardes</label></div>
+                    <div class="settings-row"><label>Intervalle sauvegarde (jours)</label><input type="number" id="backup_interval_days" min="0" style="width:120px"></div>
+                    <div class="settings-row"><label>Emplacement sauvegarde</label>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="text" id="backup_location" style="flex:1">
+                            <button type="button" id="browseBackup" class="btn">Parcourir</button>
+                        </div>
+                    </div>
+            </div>
+
+            <h3>Affichage</h3>
+            <div class="settings-grid">
+                <div class="settings-row"><label>Thème</label>
+                    <select id="theme"><option value="light">Light</option><option value="dark">Dark</option><option value="system">System</option></select>
+                </div>
+                <div class="settings-row"><label>Éléments par page</label><input type="number" id="items_per_page" min="1" style="width:120px"></div>
+            </div>
+
+            <div id="advanced-section" style="display:none; margin-top:12px; border-top:1px dashed #ccc; padding-top:10px;">
+                <h4>Avancés</h4>
+                <div class="settings-grid">
+                    <div class="settings-row"><label></label><label><input type="checkbox" id="detect_enabled"> Activer détection (back.detect)</label></div>
+                    <div class="settings-row"><label></label><label><input type="checkbox" id="debug_mode"> Mode debug</label></div>
+                    <div class="settings-row"><label>Niveau logs</label>
+                        <select id="log_level"><option>DEBUG</option><option selected>INFO</option><option>WARNING</option><option>ERROR</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <label style="margin-top:8px; display:block;"><input type="checkbox" id="show_advanced_toggle"> Afficher les paramètres avancés</label>
+            <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
+                <button id="saveSettings" class="btn sp-btn-primary">Sauvegarder</button>
+                <button id="exportButton" class="export-icon btn"><i class="fas fa-file-export"></i> Exporter CSV</button>
+            </div>
+
+            <!-- Hidden fallback pickers -->
+            <input type="file" id="filePicker" style="display:none" accept=".sfpss">
+            <input type="file" id="dirPicker" style="display:none" webkitdirectory directory>
         </div>
     `;
 
@@ -379,6 +432,125 @@ function showParameters() {
             </form>
         </div>`;
     $('body').append(backdropHtml, formHtml);
+
+    // Add minimal styles for settings grid if not present
+    if (!document.getElementById('settings-grid-style')) {
+        const style = document.createElement('style');
+        style.id = 'settings-grid-style';
+        style.innerHTML = `
+            .settings-grid { display: grid; grid-template-columns: 200px 1fr; gap:8px 12px; align-items: center; }
+            .settings-row { display: contents; }
+            #settings-container h3 { margin-top:12px; margin-bottom:6px; }
+            #settings-container label { margin:0; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Browse button -> open native picker when possible (File System Access API), fallback to hidden file input
+    document.getElementById('browseData').addEventListener('click', async function () {
+        // Prefer the File System Access API
+        try {
+            if (window.showOpenFilePicker) {
+                const [handle] = await window.showOpenFilePicker({
+                    multiple: false,
+                    types: [{ description: 'SafePass data', accept: { 'application/octet-stream': ['.sfpss'] } }]
+                });
+                if (handle) {
+                    // We cannot reliably get absolute path from the browser; use the name and let backend handle move/upload if needed
+                    $('#data_path').val(handle.name);
+                    // store handle for potential future upload
+                    window._selectedDataFileHandle = handle;
+                }
+                return;
+            }
+        } catch (e) {
+            console.warn('showOpenFilePicker failed, falling back to file input', e);
+        }
+
+        // Fallback: trigger hidden file input
+        const filePicker = document.getElementById('filePicker');
+        if (filePicker) filePicker.click();
+    });
+
+    // Fallback file input change
+    document.getElementById('filePicker').addEventListener('change', function (ev) {
+        const f = this.files && this.files[0];
+        if (f) {
+            // browsers hide full path for security; use filename
+            $('#data_path').val(f.name || 'selected-file.sfpss');
+            window._selectedDataFile = f;
+        }
+    });
+
+    // Backup folder picker (fallback using hidden dir input)
+    document.getElementById('browseBackup')?.addEventListener('click', async function () {
+        try {
+            if (window.showDirectoryPicker) {
+                const handle = await window.showDirectoryPicker();
+                if (handle) {
+                    $('#backup_location').val(handle.name || 'selected-folder');
+                    window._selectedBackupDirHandle = handle;
+                }
+                return;
+            }
+        } catch (e) {
+            console.warn('showDirectoryPicker failed, falling back to dir input', e);
+        }
+
+        const dirPicker = document.getElementById('dirPicker');
+        if (dirPicker) dirPicker.click();
+    });
+
+    // Handle fallback directory picker change
+    document.getElementById('dirPicker').addEventListener('change', function () {
+        const files = this.files;
+        if (files && files.length) {
+            // webkitRelativePath gives directory relative path like "folder/file"
+            const rel = files[0].webkitRelativePath || files[0].name;
+            const root = rel.split('/')[0];
+            $('#backup_location').val(root || files[0].name);
+            window._selectedBackupFiles = files;
+        }
+    });
+
+    // Toggle advanced section
+    $('#show_advanced_toggle').on('change', function () {
+        if ($(this).is(':checked')) $('#advanced-section').show(); else $('#advanced-section').hide();
+    });
+
+    // Handle save settings
+    document.getElementById('saveSettings').addEventListener('click', async function (e) {
+        e.preventDefault();
+        try {
+            const settings = {
+                language: $('#language').val(),
+                start_on_boot: $('#start_on_boot').is(':checked'),
+                auto_update_check: $('#auto_update_check').is(':checked'),
+                open_front_on_start: $('#open_front_on_start').is(':checked'),
+                master_password_enabled: $('#master_password_enabled').is(':checked'),
+                auto_lock_minutes: parseInt($('#auto_lock_minutes').val() || '0', 10),
+                password_strength_policy: $('#password_strength_policy').val(),
+                require_password_on_export: $('#require_password_on_export').is(':checked'),
+                data_path: $('#data_path').val(),
+                backup_enabled: $('#backup_enabled').is(':checked'),
+                backup_interval_days: parseInt($('#backup_interval_days').val() || '0', 10),
+                theme: $('#theme').val(),
+                items_per_page: parseInt($('#items_per_page').val() || '20', 10),
+                detect_enabled: $('#detect_enabled').is(':checked'),
+                debug_mode: $('#debug_mode').is(':checked'),
+                log_level: $('#log_level').val()
+            };
+
+            const resp = await fetch('http://127.0.0.1:5000/settings', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings)
+            });
+            if (!resp.ok) throw new Error('Save failed');
+            showDurationAlertMessage('Paramètres sauvegardés.', 1500, '--sp-success');
+        } catch (err) {
+            console.error('Erreur save settings', err);
+            showAlertMessage('Erreur lors de la sauvegarde des paramètres.');
+        }
+    });
 
     // Handle file export -> export to CSV via backend
     document.getElementById('exportButton').addEventListener('click', async function (e) {
@@ -451,6 +623,32 @@ function showParameters() {
         $('#parameters').remove();
         $('#backdrop').remove();
     });
+
+    // Load existing settings
+    (async function loadSettings(){
+        try{
+            const resp = await fetch('http://127.0.0.1:5000/settings');
+            if (!resp.ok) return;
+            const json = await resp.json();
+            const s = json.settings || {};
+            $('#language').val(s.language||'fr');
+            $('#start_on_boot').prop('checked', !!s.start_on_boot);
+            $('#auto_update_check').prop('checked', !!s.auto_update_check);
+            $('#open_front_on_start').prop('checked', !!s.open_front_on_start);
+            $('#master_password_enabled').prop('checked', !!s.master_password_enabled);
+            $('#auto_lock_minutes').val(s.auto_lock_minutes||5);
+            $('#password_strength_policy').val(s.password_strength_policy||'medium');
+            $('#require_password_on_export').prop('checked', !!s.require_password_on_export);
+            $('#data_path').val(s.data_path||'data/data_encrypted.sfpss');
+            $('#backup_enabled').prop('checked', !!s.backup_enabled);
+            $('#backup_interval_days').val(s.backup_interval_days||7);
+            $('#theme').val(s.theme||'system');
+            $('#items_per_page').val(s.items_per_page||20);
+            $('#detect_enabled').prop('checked', !!s.detect_enabled);
+            $('#debug_mode').prop('checked', !!s.debug_mode);
+            $('#log_level').val(s.log_level||'INFO');
+        }catch(e){console.warn('Cannot load settings',e)}
+    })();
 }
 
 

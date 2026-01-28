@@ -61,6 +61,69 @@ def test():
     log.debug("/test appelé")
     return jsonify({"status": "ok"}), 200
 
+
+# Settings endpoints
+@app.route('/settings', methods=['GET'])
+def get_settings():
+    try:
+        import os
+        settings_path = os.path.join(os.path.dirname(__file__), 'data', 'settings.json')
+        if not os.path.exists(settings_path):
+            # return defaults
+            defaults = {
+                "language": "fr",
+                "start_on_boot": False,
+                "auto_update_check": True,
+                "open_front_on_start": True,
+                "master_password_enabled": True,
+                "auto_lock_minutes": 5,
+                "password_strength_policy": "medium",
+                "enable_biometric": False,
+                "require_password_on_export": True,
+                "encryption_algorithm": "Fernet",
+                "data_path": "data/data_encrypted.sfpss",
+                "backup_enabled": True,
+                "backup_interval_days": 7,
+                "backup_location": "data/backups",
+                "sync_enabled": False,
+                "sync_provider": "none",
+                "export_format_default": "csv",
+                "theme": "system",
+                "items_per_page": 20,
+                "show_password_strength_meter": True,
+                "confirm_before_delete": True,
+                "server_host": "127.0.0.1",
+                "server_port": 5000,
+                "allow_remote_connections": False,
+                "cors_allowed_origins": ["http://localhost:3000"],
+                "debug_mode": False,
+                "log_level": "INFO",
+                "detect_enabled": False
+            }
+            return jsonify({"status": "ok", "settings": defaults})
+        with open(settings_path, 'r', encoding='utf-8') as f:
+            settings = json.load(f)
+        return jsonify({"status": "ok", "settings": settings})
+    except Exception as e:
+        log.error('get_settings error: ' + str(e))
+        return jsonify({'error': 'Unable to read settings'}), 500
+
+
+@app.route('/settings', methods=['POST'])
+def save_settings():
+    try:
+        import os
+        payload = request.get_json(force=True)
+        settings = payload if isinstance(payload, dict) else {}
+        os.makedirs(os.path.join(os.path.dirname(__file__), 'data'), exist_ok=True)
+        settings_path = os.path.join(os.path.dirname(__file__), 'data', 'settings.json')
+        with open(settings_path, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, ensure_ascii=False, indent=2)
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        log.error('save_settings error: ' + str(e))
+        return jsonify({'error': 'Unable to save settings'}), 500
+
 @app.route('/exportCSV', methods=['POST'])
 def export_csv():
     try:
