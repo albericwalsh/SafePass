@@ -23,9 +23,9 @@ a = Analysis(
         'flask_cors', 
         'cryptography',
         'gevent',
-        'gevent.websocket',
         'log',
         'back.detect',
+        'csv',
     ],
     hookspath=[],
     hooksconfig={},
@@ -53,11 +53,21 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,  # False pour exécuter silencieusement (sans console)
+    console=False,
     icon='res/icon.ico' if Path('res/icon.ico').exists() else None,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    onefile=False,  # Use one-dir mode instead to allow dynamic imports
 )
+
+coll = COLLECT(exe,
+               a.binaries,
+               a.zipfiles,
+               a.datas,
+               strip=False,
+               upx=True,
+               upx_exclude=[],
+               name='SafePass')

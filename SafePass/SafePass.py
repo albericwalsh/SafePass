@@ -1,4 +1,13 @@
 import log
+import sys
+import os
+
+# If running in a frozen environment (PyInstaller), add library paths
+if getattr(sys, 'frozen', False):
+    # Add the bundle directory to sys.path so it can find modules
+    bundle_dir = sys._MEIPASS
+    sys.path.insert(0, bundle_dir)  # This allows imports from the bundle
+
 import app
 import subprocess
 import time

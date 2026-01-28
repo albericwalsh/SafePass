@@ -1,4 +1,7 @@
-from flask import Flask, jsonify, request
+from flask import Flask, send_file, jsonify, request
+from io import StringIO, BytesIO
+import csv
+import json
 from flask_cors import CORS
 from cryptography.fernet import Fernet
 import log
@@ -57,6 +60,71 @@ except Exception as e:
 def test():
     log.debug("/test appelé")
     return jsonify({"status": "ok"}), 200
+
+@app.route('/exportCSV', methods=['POST'])
+def export_csv():
+    try:
+        payload = request.get_json(force=True)
+        data = payload.get('data') if isinstance(payload, dict) else None
+        # If frontend passed data, use it; else fallback to load stored data
+        if data is None:
+            # fallback: try to load stored data (reuse decrypt logic)
+            import os
+            data_paths = [
+                'data/data_encrypted.sfpss',
+                './data/data_encrypted.sfpss',
+                os.path.join(os.path.dirname(__file__), 'data', 'data_encrypted.sfpss'),
+                os.path.join(os.getcwd(), 'data', 'data_encrypted.sfpss')
+            ]
+            data_val = None
+            for data_path in data_paths:
+                try:
+                    data_val = decryptByPath(key, data_path)
+                    break
+                except Exception:
+                    continue
+
+            if data_val is None:
+                data_list = []
+            else:
+                if isinstance(data_val, dict):
+                    data_list = [data_val]
+                elif isinstance(data_val, list):
+                    data_list = data_val
+                else:
+                    data_list = [data_val]
+        else:
+            data_list = data if isinstance(data, list) else (json.loads(data) if isinstance(data, str) else [])
+
+        # Build CSV
+        output = StringIO()
+        if len(data_list) > 0 and isinstance(data_list[0], dict):
+            headers = list(data_list[0].keys())
+            writer = csv.DictWriter(output, fieldnames=headers)
+            writer.writeheader()
+            for item in data_list:
+                writer.writerow({k: item.get(k, '') for k in headers})
+        else:
+            # Fallback: write raw rows
+            writer = csv.writer(output)
+            for row in data_list:
+                if isinstance(row, list):
+                    writer.writerow(row)
+                elif isinstance(row, dict):
+                    writer.writerow([str(v) for v in row.values()])
+                else:
+                    writer.writerow([str(row)])
+
+        csv_bytes = output.getvalue().encode('utf-8')
+        return send_file(
+            BytesIO(csv_bytes),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name='SafePass_export.csv'
+        )
+    except Exception as e:
+        log.error('export_csv error: ' + str(e))
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/saveData', methods=['POST'])

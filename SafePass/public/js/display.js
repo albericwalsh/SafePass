@@ -380,16 +380,38 @@ function showParameters() {
         </div>`;
     $('body').append(backdropHtml, formHtml);
 
-    // Handle file export
-    document.getElementById('exportButton').addEventListener('click', function () {
+    // Handle file export -> export to CSV via backend
+    document.getElementById('exportButton').addEventListener('click', async function (e) {
+        e.preventDefault();
         try {
-            let dataStr = allData;
-            console.log('Exporting data:', dataStr);
-            cryptData(dataStr);// Convert `allData` to JSON string with indentation
-            showDurationAlertMessage("Fichier exporté avec succès.", 2000, '--sp-success');
-        } catch (e) {
-            console.error("Erreur lors de l'exportation du fichier:", e);
-            showAlertMessage("Erreur lors de l'exportation du fichier.");
+            const payload = { data: allData };
+            console.log('Requesting CSV export with payload:', payload);
+
+            const resp = await fetch('http://127.0.0.1:5000/exportCSV', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!resp.ok) {
+                const text = await resp.text();
+                throw new Error('Export failed: ' + resp.status + ' ' + text);
+            }
+
+            const blob = await resp.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'SafePass_export.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            showDurationAlertMessage("Export CSV téléchargé.", 2000, '--sp-success');
+        } catch (err) {
+            console.error('Erreur export CSV:', err);
+            showAlertMessage('Erreur lors de l\'export CSV.');
         }
     });
 
