@@ -1,0 +1,110 @@
+:root {
+    /* Core palette */
+    --sp-dark: #172033;
+    --sp-card: #0b1220;
+    --sp-text: #e6eef6;
+    --sp-light: #e6eef6;
+    --sp-muted: #9aa4b2;
+
+    /* Accent (extension green) */
+    --sp-accent: #21c997;
+    --sp-accent-grad: linear-gradient(90deg, var(--sp-accent), #33d8b0);
+    --sp-accent-subtle: linear-gradient(90deg, rgba(33,201,151,0.12), rgba(51,216,176,0.04));
+    --sp-accent-vert: linear-gradient(180deg, var(--sp-accent), #33d8b0);
+
+    /* Panels */
+    --sp-panel-bg: var(--sp-card);
+    --sp-panel-text: var(--sp-light);
+    --sp-panel-border: rgba(255,255,255,0.04);
+
+    /* Semantic colors */
+    --sp-info: #005a70;
+    --sp-success: #4ff45e;
+    --sp-alert: #f4b24f;
+    --sp-error: #f44f4f;
+    --sp-medium: #476870;
+    /* Additional variables used by parameter styles */
+    --params-sidebar-bg: #315457;
+    --params-main-bg: #e8f0f1;
+    --params-table-head-bg: #4e6b6d;
+    --params-table-row-bg: #dfeff0;
+    --params-table-row-alt: #e9f6f6;
+
+    /* Connection badge colors */
+    --sp-conn-off-bg: #f8d7da;
+    --sp-conn-off-text: #842029;
+    --sp-conn-off-border: rgba(184,14,14,0.12);
+    --sp-conn-on-bg: #d1e7dd;
+    --sp-conn-on-text: #0f5132;
+    --sp-conn-on-border: rgba(16,142,84,0.12);
+
+    /* Accent text for gradient buttons */
+    --sp-accent-text: #042024;
+}
+
+.sp-bg-dark {
+    background-color: var(--sp-dark);
+    color: var(--sp-light);
+}
+
+.sp-bg-medium {
+    background-color: var(--sp-medium);
+    color: var(--sp-light);
+}
+
+.sp-bg-light {
+    background-color: var(--sp-light);
+    color: var(--sp-text);
+}
+
+.sp-bg-info {
+    background-color: var(--sp-info);
+    color: var(--sp-text);
+}
+
+.sp-bg-success {
+    background-color: var(--sp-success);
+    color: var(--sp-text);
+}
+
+.sp-bg-alert {
+    background-color: var(--sp-alert);
+    color: var(--sp-text);
+}
+
+.sp-bg-error {
+    background-color: var(--sp-error);
+    color: var(--sp-light);
+}
+
+.sp-dark {
+    color: var(--sp-dark);
+}
+
+.sp-medium {
+    color: var(--sp-medium);
+}
+
+.sp-light {
+    color: var(--sp-light);
+}
+
+.sp-info {
+    color: var(--sp-info);
+}
+
+.sp-success {
+    color: var(--sp-success);
+}
+
+.sp-alert {
+    color: var(--sp-alert);
+}
+
+.sp-error {
+    color: var(--sp-error);
+}
+
+.sp-text {
+    border: 1px solid var(--sp-text);
+}

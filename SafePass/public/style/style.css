@@ -1,18 +1,99 @@
+@import url("colors.css");
+
+:root {
+    --header-height: 56px;
+}
 body {
     margin: 0;
-    padding-top: 56px; /* Height of the fixed navbar */
+    padding-top: 0; /* header is fixed, main uses its own margin */
     font: 1rem 'Quicksand', sans-serif;
-    background-color: var(--sp-light);
-    color: var(--sp-text);
+    /* Preserve the darker gradient defined earlier and ensure readable white text */
+    background-color: var(--sp-dark);
+    color: var(--sp-light);
+}
+.settings-tabs { 
+    display:flex; 
+    gap:8px; 
+    margin-bottom:12px; 
+    flex-wrap:wrap; 
+}
+
+/* Header and sidebar styling: neutral backgrounds with a thin accent bar */
+header.navbar {
+    background: var(--sp-header-bg);
+    background-color: var(--sp-header-bg-color);
+    color: var(--sp-light);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    z-index: 1100;
+    border-bottom: 1px solid var(--sp-navbar-border);
+}
+
+/* Thin accent bar under the header */
+header.navbar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -3px;
+    height: 4px;
+    background: var(--sp-accent-grad);
 }
 
 .sidebar {
-    top: -10px; /* Height of the fixed navbar */
-    height: 90vh;
+    background: var(--sp-sidebar-bg);
+    border-right: 1px solid var(--sp-navbar-border);
+    position: relative;
+}
+
+/* Subtle vertical accent on the left of the sidebar */
+.sidebar::before {
+    content: '';
+    position: absolute;
+    top: 16px;
+    left: 8px;
+    width: 4px;
+    bottom: 16px;
+    background: var(--sp-accent-vert);
+    border-radius: 4px;
+    opacity: 0.95;
+    }
+
+.sidebar {
+    position: fixed; /* float above the page scroll */
+    top: calc(var(--header-height) + 16px); /* leave space for fixed header */
+    left: 16px; /* add left spacing */
+    width: 240px; /* wider fixed sidebar */
+    height: auto; /* size according to content */
+    max-height: calc(100vh - 88px);
+    overflow-y: auto; /* allow vertical scroll if content exceeds viewport */
+    overflow-x: hidden; /* remove horizontal overflow */
+    background: var(--sp-sidebar-bg);
+    box-shadow: inset 0 1px 0 var(--sp-resizer-inset-border), 0 8px 30px var(--sp-shadow-strong);
+    padding-top: 24px; /* equal top/bottom padding */
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-bottom: 100px; /* equal top/bottom padding */
+    border-radius: 12px; /* rounded corners */
+    backdrop-filter: blur(6px);
+    border-left: 1px solid var(--sp-navbar-border);
+    z-index: 1050;
 }
 
 .main {
     margin-top: 56px;
+}
+
+/* Shift main content to the right to avoid being covered by the fixed sidebar on medium+ screens */
+@media (min-width: 768px) {
+    main[role="main"] {
+        margin-left: calc(240px + 16px); /* account for sidebar width + left spacing */
+    }
 }
 
 .search-bar {
@@ -24,6 +105,7 @@ body {
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    transition: transform 300ms cubic-bezier(.2,.8,.2,1);
 }
 
 .nav-item {
@@ -43,8 +125,10 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+    background-color: var(--sp-backdrop-bg);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 9999;
 }
 
 #addForm, #editForm {
@@ -63,6 +147,31 @@ body {
     margin-top: 5px;
 }
 
+/* Password field: keep input and generate button on one line */
+.password-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.password-field aws-input,
+.password-field .aws-input,
+.password-field input,
+.password-field textarea {
+    flex: 1 1 auto;
+    min-width: 0; /* prevent overflow inside flex */
+}
+.generate-password-btn {
+    flex: 0 0 auto;
+}
+
+/* Alert buttons and basic button styles so confirmation dialogs are visible */
+.alert-content .alert-buttons { display:flex; gap:8px; justify-content:flex-end; margin-top:12px; }
+.btn { padding:8px 10px; border-radius:8px; border:1px solid var(--sp-panel-border); background:transparent; color:var(--sp-light); cursor:pointer; transition:all .12s ease; }
+.btn:disabled, .btn[disabled] { opacity:0.5; cursor:default; }
+.sp-btn { padding:8px 10px; border-radius:8px; border:1px solid var(--sp-panel-border); background:transparent; color:var(--sp-light); }
+.sp-btn-primary, .btn.sp-btn-primary { background: linear-gradient(90deg,var(--sp-accent,#2b9af3), #2b9af3 60%); color: var(--sp-accent-text,#022522); border:none; }
+
+
 .form-buttons {
     margin-top: auto;
     display: flex;
@@ -79,7 +188,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--sp-backdrop-bg);
     z-index: 999;
 }
 
@@ -88,7 +197,7 @@ body {
     position: fixed;
     height: fit-content;
     width: fit-content;
-    box-shadow: 0 0 50px 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 50px 0 var(--sp-shadow-soft);
     color: var(--sp-light);
     border-radius: 10px;
     padding: 20px;
@@ -105,7 +214,7 @@ body {
     position: fixed;
     height: fit-content;
     width: fit-content;
-    box-shadow: 0 0 50px 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 50px 0 var(--sp-shadow-soft);
     color: var(--sp-light);
     border-radius: 10px;
     padding: 20px;
@@ -118,74 +227,202 @@ body {
 }
 
 .alert-windows{
-    background-color: lawngreen;
+    background-color: var(--sp-success);
 }
 
 .alert-content {
     text-align: center;
 }
 
-.alert-buttons{
-    margin-top: 20px;
-    text-align: center;
+/* Ensure main content starts below the fixed header */
+main[role="main"] {
+    margin-top: var(--header-height);
 }
 
-.sp-btn {
-    color: var(--sp-light);
-    border-color: var(--sp-light);
-    background-color: rgba(0, 0, 0, 0);
-    border-radius: 5px;
-    padding: 5px 20px;
-    margin: 2px;
-    cursor: pointer;
+/* aws-table improvements: prevent fields overlapping and make resizer handles visible where possible */
+aws-table {
+    display: block;
+    width: 100%;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-.sp-btn:hover {
-    background-color: var(--sp-light);
-    color: var(--sp-text);
+/* Table cells: ensure consistent box-sizing, prevent content from overflowing and allow truncation */
+aws-table-cell,
+aws-table-cell * {
+    box-sizing: border-box;
 }
 
-.sp-btn:focus, .sp-btn.focus{
-    outline: none;
-    box-shadow: none;
+aws-table-cell {
+    min-width: 120px;
+    padding: 8px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    /* hide overflow without showing ellipsis */
+    text-overflow: clip;
+    vertical-align: middle;
 }
 
-.sp-btn-primary {
-    background-color: var(--sp-light);
-    color: var(--sp-text);
-    border-radius: 5px;
-    padding: 5px 20px;
-    margin: 2px;
-    cursor: pointer;
+/* Make password column wider by default to avoid truncation */
+aws-table-cell[data-key="password"] {
+    min-width: 240px;
+    max-width: 420px;
 }
 
-.sp-btn-primary:hover {
-    color: var(--sp-light);
-    border-color: var(--sp-light);
-    background-color: rgba(0, 0, 0, 0);
+/* Ensure password input stretches to fill the cell */
+aws-table-cell[data-key="password"] aws-input,
+aws-table-cell[data-key="password"] .aws-input {
+    min-width: 0;
+    width: 100%;
 }
 
-.sp-btn-primary:focus, .sp-btn-primary.focus {
-    outline: none;
-    box-shadow: none;
+/* Ensure aws-input uses available space and doesn't force overflow */
+aws-table-cell aws-input,
+aws-input {
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.sp-link {
-    color: var(--sp-light);
-    text-decoration: none;
+/* Attempt to style resizer part if component exposes it via ::part()
+   (this will apply only if aws-widgets exposes a part named 'resizer') */
+aws-table::part(resizer),
+aws-table-cell::part(resizer),
+aws-table-row::part(resizer) {
+    width: 8px;
+    background: var(--sp-resizer-bg);
+    cursor: col-resize;
+    border-left: 1px solid var(--sp-resizer-border);
 }
 
-.sp-link:hover, .sp-link:focus {
-    color: var(--sp-light);
-    text-decoration: underline;
+/* Visual fallback: if the widget injects an internal handle element with class names, increase their visibility */
+.aws-table-resizer,
+.resizer,
+[data-resizer] {
+    width: 12px !important;
+    min-width: 12px !important;
+    background: var(--sp-resizer-gradient) !important;
+    cursor: col-resize !important;
+    display: inline-block !important;
+    vertical-align: top !important;
+    z-index: 1199 !important;
 }
 
-.file-input {
+/* Hover state to make resizers more visible when user approaches */
+.aws-table-resizer:hover,
+.resizer:hover,
+[data-resizer]:hover,
+aws-table::part(resizer):hover,
+aws-table-cell::part(resizer):hover {
+    background: var(--sp-resizer-hover) !important;
+    box-shadow: inset 0 0 0 1px var(--sp-resizer-inset-border) !important;
+}
+
+/* Make sure resizer area receives pointer events */
+aws-table::part(resizer), aws-table-cell::part(resizer), aws-table-row::part(resizer),
+.aws-table-resizer, .resizer, [data-resizer] {
+    pointer-events: all !important;
+}
+
+/* Limit tools column width so buttons don't push other fields */
+aws-table-cell[data-key="Tools"] {
+    min-width: 96px;
+    max-width: 140px;
+}
+
+/* Small screens: allow wrapping if needed but keep inputs responsive */
+@media (max-width: 600px) {
+    aws-table-cell { min-width: 80px; }
+}
+
+/* Search bar sticky behavior */
+.search-bar {
+    position: relative;
     display: flex;
-    align-items: center;
+    justify-content: center;
+    transition: transform 250ms ease, top 250ms ease, width 250ms ease, box-shadow 250ms ease, opacity 200ms ease;
+    z-index: 1105;
 }
 
-.browse-icon {
-    margin-left: 10px;
-    cursor: pointer;
+.search-bar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: var(--sp-search-overlay-bg);
+    opacity: 0;
+    transition: opacity 320ms ease;
+    pointer-events: none;
+    z-index: 1106;
+}
+
+.search-bar aws-search,
+.search-bar .aws-search {
+    width: 100%;
+    display: block; /* allow margin auto to center */
+    margin: 0 auto;
+    align-self: center;
+    max-width: 100%;
+}
+
+.search-bar.sticky {
+    /* visual-only: do not override layout (left/top/transform/width) here */
+    padding: 6px 10px;
+    border-radius: 8px;
+    /* background is handled by the pseudo-element to allow smooth fade */
+
+/* Path input helper: keep button immediately beside the input */
+.path-input-wrap { display:flex; align-items:center; gap:6px; }
+.path-input-wrap aws-input, .path-input-wrap .aws-input, .path-input-wrap input { flex:1 1 auto; min-width:0; }
+.path-input-wrap .path-btn { flex:0 0 auto; width:32px; height:28px; padding:4px; display:inline-flex; align-items:center; justify-content:center; }
+    box-shadow: 0 6px 24px var(--sp-shadow-medium);
+    opacity: 1;
+    z-index: 1150;
+}
+
+.search-bar.sticky::before { opacity: 1; }
+
+.search-bar.sticky aws-search,
+.search-bar.sticky .aws-search {
+    /* occupy the full width of the sticky container */
+    display: block;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    align-self: center; /* center self vertically */
+    transform: none !important; /* remove left-offset when sticky */
+    transition: transform 300ms cubic-bezier(.2,.8,.2,1);
+}
+
+.search-bar aws-search,
+.search-bar .aws-search {
+    transition: transform 300ms cubic-bezier(.2,.8,.2,1);
+    display: block;
+    width: auto;
+}
+
+/* Make sure the aws-search host sits above the overlay and is centered */
+.search-bar aws-search,
+.search-bar .aws-search {
+    position: relative;
+    z-index: 1110; /* above the ::before overlay */
+    display: block; /* allow margin auto to center */
+    margin: 0 auto;
+    align-self: center;
+}
+
+/* When not sticky keep natural width and centering */
+.search-bar:not(.sticky) aws-search,
+.search-bar:not(.sticky) .aws-search {
+    width: auto;
+    max-width: 760px;
+}
+
+.search-bar-placeholder {
+    display: block;
+    width: 100%;
+}
+
+@media (max-width: 800px) {
+    .search-bar.sticky { width: 92%; left: 50%; transform: translateX(-50%); }
 }

@@ -47,6 +47,28 @@ def initialize(app_name: str = "app"):
 
 
 # -----------------------------------------------------------------------------
+# Niveau de log configurable
+# -----------------------------------------------------------------------------
+LEVEL_PRIORITY = {
+    'DEBUG': 10,
+    'INFO': 20,
+    'WARNING': 30,
+    'ERROR': 40,
+    'CRITICAL': 50
+}
+
+_CURRENT_LEVEL = LEVEL_PRIORITY['INFO']
+
+def set_level(level_str: str):
+    global _CURRENT_LEVEL
+    if not level_str:
+        return
+    lvl = LEVEL_PRIORITY.get(level_str.upper())
+    if lvl is not None:
+        _CURRENT_LEVEL = lvl
+
+
+# -----------------------------------------------------------------------------
 # Fonctions internes
 # -----------------------------------------------------------------------------
 def _now():
@@ -58,6 +80,11 @@ def _write(level: LogLevel, message: str):
 
     if _log_file is None:
         raise RuntimeError("Logger not initialized. Call initialize() first.")
+
+    # filter by current level
+    priority = LEVEL_PRIORITY.get(level.value, 0)
+    if priority < _CURRENT_LEVEL:
+        return
 
     log_line = f"[{_now()}] [{level.value}] {message}"
 

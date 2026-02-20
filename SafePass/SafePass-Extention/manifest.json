@@ -3,19 +3,24 @@
   "name": "SafePassExtention",
   "version": "1.0.0",
   "description": "Requires for automatiques password filling",
-  "permissions": ["tabs", "activeTab", "contextMenus", "windows", "background"],
+  "permissions": ["tabs", "activeTab", "contextMenus", "windows", "scripting", "storage"],
   "background": {
-    "service_worker": "background.js"
+      "service_worker": "src/background.js"
   },
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icon.png"
   },
   "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"]
-    }
+      {
+        "matches": ["<all_urls>"],
+        "js": ["src/utils.js", "src/content.js"]
+      }
+    ],
+  "host_permissions": [
+    "http://localhost:5000/*",
+    "https://localhost:5000/*",
+    "http://127.0.0.1:5000/*"
   ],
   "icons": {
     "128": "icon.png"

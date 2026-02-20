@@ -1,5 +1,4 @@
 back
-crypting
 data
 node_modules
 public

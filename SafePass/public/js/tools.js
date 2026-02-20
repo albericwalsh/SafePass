@@ -9,25 +9,8 @@ function copyToClipboard(text) {
 }
 
 function sortTable(columnKey) {
-    let rows = $('#dynamic-list tr').get();
-    rows.sort(function (a, b) {
-        let A = $(a).find(`td[data-key="${columnKey}"]`).text().toLowerCase();
-        let B = $(b).find(`td[data-key="${columnKey}"]`).text().toLowerCase();
-
-        if (sortOrder[columnKey] === 'asc') {
-            return (A < B) ? -1 : (A > B) ? 1 : 0;
-        } else {
-            return (A > B) ? -1 : (A < B) ? 1 : 0;
-        }
-    });
-
-    // Append sorted rows to the table body
-    $.each(rows, function (index, row) {
-        $('#dynamic-list').append(row);
-    });
-
-    // Toggle the sort order for next click
-    sortOrder[columnKey] = (sortOrder[columnKey] === 'asc') ? 'desc' : 'asc';
+    // Sorting is temporarily disabled per user request.
+    return;
 }
 
 function deleteEntry(category, entry) {
@@ -78,8 +61,20 @@ function updateItemInCategory(category, oldEntry, newEntry) {
 
 // Function to generate and set password
 function generateAndSetPassword() {
-    const password = generatePassword();
-    $('#password').val(password);
+    const result = generatePassword();
+    // result may be string (legacy) or object { password, strengthPercent }
+    const pw = (result && result.password) ? result.password : result;
+    const pct = (result && typeof result.strengthPercent !== 'undefined') ? result.strengthPercent : null;
+    $('#password').val(pw);
+    // show strength percent next to the field (place before the input)
+    try{
+        const container = $('#password').closest && $('#password').closest('.password-field') ? $('#password').closest('.password-field') : $('.password-field').first();
+        if (container && container.length){
+            let el = container.find('.password-strength-percent');
+            if (!el || el.length===0){ el = $('<span class="password-strength-percent" style="margin-right:8px;color:var(--sp-panel-text);min-width:44px;display:inline-block"></span>'); container.prepend(el); }
+            if (pct === null) el.text(''); else el.text(pct + '%');
+        }
+    }catch(e){ console.debug('Could not set strength percent', e); }
 }
 
 // Call saveData() whenever data is modified
@@ -90,6 +85,8 @@ function addItemToCategory(category, newItem) {
         }
     });
     saveAllData(); // Save data after modifying it
+    // restore body scroll and remove form
+    try{ $('body').css('overflow', ''); }catch(e){}
     $('#add').remove(); // Remove the form after submission
     $('#backdrop').remove(); // Remove the backdrop after submission
     displayCategory(currentCategory); // Refresh the current view

@@ -3,14 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <title>Statut de Connexion</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 10px; }
-        #status { font-size: 16px; }
-    </style>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="src/font.css">
+    <link rel="stylesheet" href="src/colors.css">
+    <link rel="stylesheet" href="src/style.css">
+    <link rel="stylesheet" href="src/popup.css">
 </head>
 <body>
-<h3>Statut de Connexion</h3>
-<p id="status">Chargement...</p>
-<script src="popup.js"></script>
+<div class="card">
+    <div class="card-header">
+        <div>
+            <div class="title">Statut de Connexion</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+                <div id="status" class="status">Chargement...</div>
+                <button id="reload-connection" class="reload-btn" title="Re-tester la connexion" style="display:none">↻</button>
+            </div>
+            <div style="margin-top:6px">
+                <div id="detect-status" class="muted small">Lecture du paramètre detection...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <h4>Jeton d'extension</h4>
+        <p class="muted">Définissez un jeton partagé entre l'extension et l'application pour sécuriser les appels.</p>
+        <aws-input id="ext-token-input" type="text" mode="edit" placeholder="Tapez le jeton ici"></aws-input>
+        <div class="actions">
+            <button id="save-token" class="btn primary">Enregistrer le jeton</button>
+            <button id="clear-token" class="btn">Effacer le jeton</button>
+        </div>
+        <p class="muted small">Jeton actuel: <span id="current-token">(non défini)</span> <span id="token-valid-icon" class="token-icon" title="Statut du token">●</span></p>
+    </div>
+</div>
+
+<script src="src/popup.js"></script>
 </body>
 </html>

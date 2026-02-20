@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Access Denied</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="public/style/colors.css">
+    <script type="module">
+      const { initWidgets } = await import('https://cdn.jsdelivr.net/gh/albericwalsh/aws-widgets@v0.1.2/dist/aws-widgets.es.js');
+      await initWidgets();
+      window.awsWidgetsReady = true;
+    </script>
   <style>
     body {
       display: flex;
@@ -11,17 +18,17 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      background-color: #f8f8f8;
+      /* background handled by theme class */
       font-family: Arial, sans-serif;
     }
     h1 {
       font-size: 4em;
-      color: #ff0000;
+      color: var(--sp-error);
       text-transform: uppercase;
     }
   </style>
 </head>
-<body>
+<body class="sp-bg-dark">
 <h1>Access Denied</h1>
 </body>
 </html>

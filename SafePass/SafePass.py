@@ -88,6 +88,14 @@ def main():
     # Créer un fichier de log
     log.info('SafePass starting')
     try:
+        # Detect if launcher was invoked as an automated startup (e.g. Windows task at login)
+        started_by_system = False
+        try:
+            if '--startup' in sys.argv or os.environ.get('SAFEPASS_AUTOSTART') in ('1', 'true', 'True'):
+                started_by_system = True
+        except Exception:
+            started_by_system = False
+        log.info(f'Started by system: {started_by_system}')
         # Vérifier si un backend est déjà présent
         if is_backend_running():
             print("Backend déjà en cours d'exécution, pas de nouveau démarrage.")
@@ -106,8 +114,20 @@ def main():
             # Lancer le frontend une fois le backend prêt
             start_frontend()
 
-            # Attendre que le frontend réponde puis ouvrir le navigateur
-            if wait_for_frontend():
+            # Attendre que le frontend réponde puis ouvrir le navigateur only for manual starts
+            try_open = False
+            try:
+                # respect runtime setting but do not open when started automatically
+                try:
+                    cfg_open = bool(app.SETTINGS.get('open_front_on_start', True))
+                except Exception:
+                    cfg_open = True
+                if (not started_by_system) and cfg_open:
+                    try_open = True
+            except Exception:
+                try_open = False
+
+            if try_open and wait_for_frontend():
                 try:
                     import webbrowser
                     webbrowser.open('http://localhost:3000')
@@ -115,7 +135,7 @@ def main():
                 except Exception as e:
                     log.error(f"Impossible d'ouvrir le navigateur: {e}")
             else:
-                log.warning("Frontend non disponible, navigateur non ouvert")
+                log.info("Frontend démarré mais navigateur non ouvert (automated start or disabled)")
         else:
             print("Erreur: Backend non disponible")
             log.error("Impossible de démarrer le frontend - backend non disponible")

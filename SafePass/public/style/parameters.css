@@ -1,0 +1,70 @@
+/* Import shared parameter styles */
+@import url("parameters-common.css");
+@import url("colors.css");
+
+/* Parameters page specific styles */
+:root {
+    --params-sidebar-width: 240px;
+}
+body {
+    background: var(--sp-bg-dark, var(--sp-dark));
+    /* color: var(--sp-light); */
+}
+header.navbar { box-shadow: 0 2px 6px var(--sp-shadow-panel); }
+
+/* Sidebar */
+:root{ --params-sidebar-bg: var(--params-sidebar-bg); --params-main-bg: var(--params-main-bg); }
+#params-sidebar { list-style:none; padding-left:8px; margin:0; width:var(--params-sidebar-width); }
+#params-sidebar .nav-item { margin-bottom:12px; display:block; }
+#params-sidebar .nav-link {
+    display:block; padding:10px 12px; color:var(--sp-light); text-decoration:none; border-radius:6px; width:100%;
+}
+#params-sidebar .nav-link:hover { background: var(--sp-navbar-border); text-decoration:none; }
+#params-sidebar .nav-link.active { background: var(--sp-navbar-border); color: var(--sp-light); font-weight:600; border-left:4px solid transparent; border-image: var(--sp-accent-vert) 1; padding-left:8px; }
+
+/* Sidebar category (sp-link) improvements */
+#params-sidebar .sp-link { display:flex; align-items:center; padding:10px 12px; gap:8px; color:var(--sp-light); text-decoration:none; border-radius:6px; font-weight:500; transition: background .12s ease, transform .06s ease; }
+#params-sidebar .sp-link:hover { background: var(--sp-navbar-border); text-decoration:none; }
+#params-sidebar .sp-link.active { background: var(--sp-accent-subtle); color:var(--sp-light); font-weight:700; border-left:4px solid transparent; border-image: var(--sp-accent-vert) 1; padding-left:8px; }
+
+
+/* Main content */
+#params-content { min-height: 70vh; }
+#params-main-area { background: var(--sp-panel-bg); color: var(--sp-panel-text); padding:18px; border-radius:8px; box-shadow: 0 8px 30px var(--sp-shadow-panel); }
+
+/* Search bar */
+.params-search { margin-bottom:12px; }
+.params-search input { width:100%; padding:10px 12px; border-radius:6px; border:1px solid var(--sp-input-border); }
+
+/* Table skeleton */
+.params-table { width:100%; border-collapse:collapse; margin-top:8px; }
+.params-table thead th { text-align:left; padding:10px; background: var(--params-table-head-bg); color:var(--sp-light); font-weight:700; }
+.params-table tbody td { padding:10px; border-top:1px solid var(--sp-sep); background: var(--params-table-row-bg); }
+.params-table tbody tr:nth-child(even) td { background: var(--params-table-row-alt); }
+.params-table .actions { text-align:right; }
+
+/* Global hook for active category (adds subtle header) */
+.params-category-active-sites #params-main-area::before,
+.params-category-active-applications #params-main-area::before,
+.params-category-active-autres #params-main-area::before,
+.params-category-active-general #params-main-area::before,
+.params-category-active-extension #params-main-area::before,
+.params-category-active-security #params-main-area::before,
+.params-category-active-storage #params-main-area::before,
+.params-category-active-display #params-main-area::before,
+.params-category-active-advanced #params-main-area::before {
+    content: '';
+    display:block;
+    height:6px;
+    width:100%;
+    border-radius:6px 6px 0 0;
+    background: var(--sp-accent-grad);
+    margin-bottom:10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+    nav.sidebar { display:none; }
+    #params-main-area { margin: 10px; }
+}
+

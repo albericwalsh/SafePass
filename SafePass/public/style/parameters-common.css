@@ -1,0 +1,131 @@
+@import url("colors.css");
+/* Use app theme variables when available */
+:root {
+    --params-label-width: 180px;
+    --sp-panel-bg: var(--sp-card);
+    --sp-panel-text: var(--sp-light);
+    --sp-panel-border: var(--sp-panel-border);
+}
+
+.params-form { 
+    max-width:100%; 
+    background: var(--sp-panel-bg); 
+    color: var(--sp-panel-text); 
+    padding: 12px; border-radius:8px; }
+.params-form .form-row { 
+    display:flex; 
+    align-items:center; 
+    gap:12px;
+    margin-bottom:12px; }
+.params-form .form-label { 
+    width:var(--params-label-width); 
+    color:var(--sp-panel-text); 
+    font-weight:600; 
+}
+.params-form .form-control { 
+    flex:1; 
+    padding:8px 10px; 
+    border-radius:6px; 
+    border:1px solid var(--sp-panel-border); 
+    background: var(--sp-panel-overlay);
+    color: var(--sp-panel-text);
+}
+.form-check { 
+    margin-bottom:8px; 
+    color:var(--sp-panel-text); 
+}
+.form-actions { margin-top:16px; }
+
+/* Two-column params grid */
+.params-grid {
+    display:block;
+}
+.param-row {
+    display: grid;
+    /* Let the left column size to the widest label/content */
+    grid-template-columns: max-content 1fr;
+    gap:10px 18px;
+    align-items: center;
+    margin-bottom:12px;
+}
+.param-name {
+    padding:8px 6px;
+    color:var(--sp-panel-text);
+    font-weight:600;
+    /* allow the name column to size to content; don't clip */
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+}
+.param-value { 
+    padding:6px; 
+    flex:1 1 auto; 
+    min-width:0; }
+.param-actions { 
+    display:flex; 
+    align-items:center; 
+    gap:8px; }
+.param-value.param-control-wrap { 
+    display:flex; 
+    align-items:center; 
+    gap:8px; }
+.params-category-title { 
+    margin-top:0; 
+    margin-bottom:10px; 
+    font-size:18px; 
+    color:var(--sp-panel-text); 
+}
+
+/* --- Extension token / connection visuals (shared) --- */
+.sp-pulse { animation: sp-pulse 1.2s ease-in-out; }
+@keyframes sp-pulse { 0% { box-shadow: 0 0 0 0 var(--sp-pulse-color); } 70% { box-shadow: 0 0 0 12px rgba(0,123,255,0); } 100% { box-shadow: 0 0 0 0 rgba(0,123,255,0); } }
+
+.sp-check { color: var(--sp-success); margin-left:8px; opacity:0; transition: opacity .18s ease-in-out; vertical-align:middle; }
+.sp-check.visible { opacity:1; }
+
+.sp-conn-badge { padding:6px 8px; border-radius:12px; font-size:12px; font-weight:600; display:inline-block; margin-left:8px; }
+.sp-conn-badge.off { background: var(--sp-conn-off-bg); color: var(--sp-conn-off-text); border:1px solid var(--sp-conn-off-border); }
+.sp-conn-badge.on { background: var(--sp-conn-on-bg); color: var(--sp-conn-on-text); border:1px solid var(--sp-conn-on-border); }
+
+.sp-token-generated { animation: sp-token-gen 1s ease-in-out; border-radius:6px; }
+@keyframes sp-token-gen { 0% { transform: scale(0.98); box-shadow: 0 0 0 0 var(--sp-token-color); } 50% { transform: scale(1.02); box-shadow: 0 0 18px 8px var(--sp-token-color-subtle); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,193,7,0); } }
+
+/* extension-specific structural helpers (kept small; generic classes prefered) */
+.extension-box .param-name { white-space: nowrap; }
+.extension-box .param-actions { display:flex; align-items:center; gap:8px; }
+.extension-box .param-value.param-control-wrap { display:flex; align-items:center; gap:8px; }
+
+/* Custom styling for threshold number inputs */
+input[type="number"][id^="security-strength_threshold_"] {
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 14px 14px;
+    padding-right: 34px;
+    transition: box-shadow .12s ease, border-color .12s ease;
+}
+
+/* Use a small SVG showing up/down chevrons as the custom control */
+input[type="number"][id^="security-strength_threshold_"]{
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'><g fill='none' stroke='%23222' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6-6 6 6'/><path d='M18 15l-6 6-6-6'/></g></svg>");
+}
+
+input[type="number"][id^="security-strength_threshold_"]:focus{
+    outline: none;
+    box-shadow: 0 6px 16px var(--sp-shadow-small);
+    border-color: var(--sp-border-strong);
+}
+
+/* For dark theme legibility use lighter icon on dark backgrounds */
+@media (prefers-color-scheme: dark){
+    input[type="number"][id^="security-strength_threshold_"]{ background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'><g fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6-6 6 6'/><path d='M18 15l-6 6-6-6'/></g></svg>"); }
+}
+
+/* Hide native spin buttons in WebKit-based browsers (redundant with appearance:none but kept for completeness) */
+input[type="number"][id^="security-strength_threshold_"]::-webkit-inner-spin-button,
+input[type="number"][id^="security-strength_threshold_"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

@@ -1,3 +1,4 @@
+README.md
 app.py
 setup.py
 SafePass.egg-info/PKG-INFO
@@ -5,6 +6,6 @@ SafePass.egg-info/SOURCES.txt
 SafePass.egg-info/dependency_links.txt
 SafePass.egg-info/top_level.txt
 back/detect.py
-crypting/crypt_file.py
-crypting/decrypt_file.py
-crypting/generate a crypting key.py
+back/crypting/crypt_file.py
+back/crypting/decrypt_file.py
+back/crypting/generate a crypting key.py

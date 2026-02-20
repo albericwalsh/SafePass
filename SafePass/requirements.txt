@@ -1,5 +1,7 @@
 altgraph==0.17.5
 attrs==25.4.0
+altgraph==0.17.5
+attrs==25.4.0
 auto-py-to-exe==2.48.1
 blinker==1.9.0
 bottle==0.13.4
@@ -35,7 +37,6 @@ PyRect==0.2.0
 PySocks==1.7.1
 pywin32-ctypes==0.2.3
 requests==2.32.5
-SafePass @ file:///D:/Documents/Informatique/php/SafePass%201.0/SafePass/dist/SafePass-1.2-py3-none-any.whl#sha256=a3fca748eea50ce9d8bb55372563ffe8b015447c0770d05941a61b3c3e23ca55
 selenium==4.40.0
 setuptools==80.10.2
 six==1.17.0

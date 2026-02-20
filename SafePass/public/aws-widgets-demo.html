@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>AWS Widgets — settings demo</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script type="module" src="https://cdn.jsdelivr.net/gh/albericwalsh/aws-widgets@v0.1.2/dist/index.js"></script>
+    <script type="module" src="./aws-widgets-demo.js"></script>
+    <style>
+      body{font-family:system-ui,Segoe UI,Arial;max-width:900px;margin:24px}
+      .row{display:flex;gap:12px;align-items:center;margin:8px 0}
+      label{min-width:220px;color:var(--sp-dark)}
+      .logs{background:var(--sp-dark);color:var(--sp-muted);padding:12px;height:160px;overflow:auto;font-family:monospace}
+    </style>
+  </head>
+  <body>
+    <h1>aws-widgets — Settings demo</h1>
+    <p>Chargement dynamique de <code>data/settings.json</code> en widgets (aws-bool, aws-text...).</p>
+    <div id="form"></div>
+    <div style="margin-top:16px">
+      <aws-button id="saveBtn" variant="primary">Save</aws-button>
+      <aws-button id="reloadBtn" variant="secondary">Reload</aws-button>
+    </div>
+    <h2>Console logs</h2>
+    <div id="logs" class="logs"></div>
+  </body>
+</html>

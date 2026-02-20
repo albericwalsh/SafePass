@@ -1,7 +1,9 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: SafePass
-Version: 1.2
+Version: 1.1.0.0
 Summary: Password manager
 Home-page: https://www.python.org/sigs/distutils-sig/
 Author: Alberic WALSH DE SERRANT
-Author-email: albericwdsrt@gmail.com
+Dynamic: author
+Dynamic: home-page
+Dynamic: summary

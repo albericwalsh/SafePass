@@ -1,12 +1,76 @@
 :root {
-    --sp-text: #030f11;
-    --sp-dark: #213236;
-    --sp-medium: #476870;
-    --sp-light: #DCE8EB;
+    /* Core palette */
+    --sp-dark: #172033;
+    --sp-card: #0b1220;
+    --sp-text: #e6eef6;
+    --sp-light: #e6eef6;
+    --sp-muted: #9aa4b2;
+
+    /* Header / navbar */
+    --sp-header-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    --sp-header-bg-color: rgba(8,14,24,0.96);
+    /* Sidebar */
+    --sp-sidebar-bg-gradient: linear-gradient(180deg, rgba(11,18,32,0.98), rgba(6,10,18,0.95));
+    --sp-sidebar-bg: linear-gradient(180deg, rgba(11,18,32,0.98), rgba(6,10,18,0.95));
+    --sp-navbar-border: rgba(255,255,255,0.03);
+     /* Overlays, resizers and shadows
+         These are provided as variables so JS can override them per-theme */
+     --sp-resizer-bg: rgba(255,255,255,0.06);
+     --sp-resizer-border: rgba(255,255,255,0.03);
+     --sp-resizer-gradient: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+     --sp-resizer-hover: rgba(255,255,255,0.12);
+     --sp-resizer-inset-border: rgba(255,255,255,0.02);
+     --sp-panel-overlay: rgba(255,255,255,0.02);
+     --sp-search-overlay-bg: rgba(12,18,28,0.98);
+     --sp-shadow-strong: rgba(0,0,0,0.55);
+     --sp-shadow-medium: rgba(0,0,0,0.45);
+     --sp-shadow-soft: rgba(0,0,0,0.5);
+    /* Backdrops, panels and separators */
+    --sp-backdrop-bg: rgba(0,0,0,0.55);
+    --sp-shadow-panel: rgba(2,6,23,0.25);
+    --sp-input-border: rgba(0,0,0,0.08);
+    --sp-sep: rgba(0,0,0,0.06);
+    --sp-shadow-small: rgba(0,0,0,0.18);
+    --sp-border-strong: rgba(255,255,255,0.18);
+    /* Pulse/token animation colors */
+    --sp-pulse-color: rgba(0,123,255,0.7);
+    --sp-token-color: rgba(255,193,7,0.8);
+    --sp-token-color-subtle: rgba(255,193,7,0.22);
+
+    /* Accent (extension green) */
+    --sp-accent: #21c997;
+    --sp-accent-grad: linear-gradient(90deg, var(--sp-accent), #33d8b0);
+    --sp-accent-subtle: linear-gradient(90deg, rgba(33,201,151,0.12), rgba(51,216,176,0.04));
+    --sp-accent-vert: linear-gradient(180deg, var(--sp-accent), #33d8b0);
+
+    /* Panels */
+    --sp-panel-bg: var(--sp-card);
+    --sp-panel-text: var(--sp-light);
+    --sp-panel-border: rgba(255,255,255,0.04);
+
+    /* Semantic colors */
     --sp-info: #005a70;
     --sp-success: #4ff45e;
     --sp-alert: #f4b24f;
     --sp-error: #f44f4f;
+    --sp-medium: #476870;
+    /* Additional variables used by parameter styles */
+    --params-sidebar-bg: #315457;
+    --params-main-bg: #e8f0f1;
+    --params-table-head-bg: #4e6b6d;
+    --params-table-row-bg: #dfeff0;
+    --params-table-row-alt: #e9f6f6;
+
+    /* Connection badge colors */
+    --sp-conn-off-bg: #f8d7da;
+    --sp-conn-off-text: #842029;
+    --sp-conn-off-border: rgba(184,14,14,0.12);
+    --sp-conn-on-bg: #d1e7dd;
+    --sp-conn-on-text: #0f5132;
+    --sp-conn-on-border: rgba(16,142,84,0.12);
+
+    /* Accent text for gradient buttons */
+    --sp-accent-text: #042024;
 }
 
 .sp-bg-dark {
