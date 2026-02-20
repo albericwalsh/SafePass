@@ -41,6 +41,8 @@
             addRow('token_path','token_path', (function(){ return (window.SP_params && window.SP_params.makePathInput) ? window.SP_params.makePathInput('storage-token_path','', {directory:false}) : (function(){ const i = document.createElement('aws-input'); i.id='storage-token_path'; i.setAttribute('mode','edit'); return i; })(); })());
             addRow('backup_enabled','backup_enabled', makeBool('storage-backup_enabled'));
             addRow('backup_interval_days','backup_interval_days', makeNumber('storage-backup_interval_days', 1, 3650, 7));
+            addRow('backup_location','backup_location', (function(){ return (window.SP_params && window.SP_params.makePathInput) ? window.SP_params.makePathInput('storage-backup_location','', {directory:true}) : (function(){ const i = document.createElement('aws-input'); i.id='storage-backup_location'; i.setAttribute('mode','edit'); return i; })(); })());
+            addRow('backup_history_count','backup_history_count', makeNumber('storage-backup_history_count', 1, 1000, 20));
 
             // Backup and storage-only controls (log controls moved to Advanced)
 
@@ -72,12 +74,16 @@
                     const tokenPath = (st && typeof st.token_path !== 'undefined' && st.token_path !== null) ? st.token_path : (typeof s.token_path !== 'undefined' ? s.token_path : '');
                     const backupEnabled = (typeof (st && st.backup_enabled) !== 'undefined') ? st.backup_enabled : (typeof s.backup_enabled !== 'undefined' ? s.backup_enabled : true);
                     const backupInterval = (typeof (st && st.backup_interval_days) !== 'undefined') ? st.backup_interval_days : (typeof s.backup_interval_days !== 'undefined' ? s.backup_interval_days : 7);
-                    try{ console.debug('populate storage - using values:', { dataPath, tokenPath, backupEnabled, backupInterval }); }catch(e){}
+                    const backupLocation = (typeof (st && st.backup_location) !== 'undefined') ? st.backup_location : (typeof s.backup_location !== 'undefined' ? s.backup_location : '');
+                    const backupHistory = (typeof (st && st.backup_history_count) !== 'undefined') ? st.backup_history_count : (typeof s.backup_history_count !== 'undefined' ? s.backup_history_count : 20);
+                    try{ console.debug('populate storage - using values:', { dataPath, tokenPath, backupEnabled, backupInterval, backupLocation, backupHistory }); }catch(e){}
                     // Do NOT validate paths in the frontend; simply display stored values.
                     setVal('storage-data_path', dataPath);
                     setVal('storage-token_path', tokenPath);
                     setBool('storage-backup_enabled', !!backupEnabled);
                     setVal('storage-backup_interval_days', backupInterval);
+                    setVal('storage-backup_location', backupLocation);
+                    setVal('storage-backup_history_count', backupHistory);
 
                     // log settings are managed in Advanced UI; keep storage display minimal
                     try{ if (window.SP_params && typeof window.SP_params.initAwsWidgets === 'function') window.SP_params.initAwsWidgets(area); }catch(e){}
@@ -94,6 +100,8 @@
                         token_path: getVal('storage-token_path') || '',
                         backup_enabled: !!getVal('storage-backup_enabled'),
                         backup_interval_days: parseInt(getVal('storage-backup_interval_days') || 7,10),
+                        backup_location: getVal('storage-backup_location') || '',
+                        backup_history_count: parseInt(getVal('storage-backup_history_count') || 20,10)
                         // no log fields here; advanced section handles them
                     }
                 };

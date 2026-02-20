@@ -51,6 +51,7 @@ def register(app):
                     data = decryptByPath(key, data_path)
                     break
                 except Exception:
+                    log.warning(f"Failed to decrypt data at {data_path}, trying next path if available")
                     continue
             if data is None:
                 return jsonify({'status': 'warning', 'message': 'no data'}), 404

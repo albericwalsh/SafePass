@@ -155,7 +155,19 @@
     };
     
 
-    async function loadSettings(){ const proto = window.location.protocol; const host = window.location.hostname; const isFrontendDev = (window.location.port === '3000'); const backendBase = `${proto}//${host}:5000`; const safeParseJsonResponse = async (res) => { if (!res || !res.ok) return null; const ct = (res.headers.get('content-type')||'').toLowerCase(); if (ct.indexOf('application/json') !== -1) return await res.json(); try { const txt = await res.text(); return JSON.parse(txt); } catch(e){ return null; } }; if (isFrontendDev) { try { const url = backendBase + '/settings'; const r = await fetch(url,{cache:'no-store'}); const parsed = await safeParseJsonResponse(r); if (parsed) return parsed; } catch(e){} } try { const url = '/settings'; const r = await fetch(url,{cache:'no-store'}); const parsed = await safeParseJsonResponse(r); if (parsed) return parsed; } catch(e){} try { const url = backendBase + '/settings'; const r = await fetch(url,{cache:'no-store'}); const parsed = await safeParseJsonResponse(r); if (parsed) return parsed; } catch(e){} return null; }
+    async function loadSettings(){
+        const proto = window.location.protocol; const host = window.location.hostname; const isFrontendDev = (window.location.port === '3000'); const backendBase = `${proto}//${host}:5000`;
+        const safeParseJsonResponse = async (res) => { if (!res || !res.ok) return null; const ct = (res.headers.get('content-type')||'').toLowerCase(); if (ct.indexOf('application/json') !== -1) return await res.json(); try { const txt = await res.text(); return JSON.parse(txt); } catch(e){ return null; } };
+        const tryFetch = async (url) => { try{ const r = await fetch(url,{cache:'no-store'}); return await safeParseJsonResponse(r); }catch(e){ return null; } };
+        let parsed = null;
+        if (isFrontendDev) parsed = await tryFetch(backendBase + '/settings');
+        if (!parsed) parsed = await tryFetch('/settings');
+        if (!parsed) parsed = await tryFetch(backendBase + '/settings');
+        if (!parsed) return null;
+        // If backend returns { status: 'ok', settings: { ... } }, return the inner settings object
+        if (parsed && typeof parsed === 'object' && parsed.settings && typeof parsed.settings === 'object') return parsed.settings;
+        return parsed;
+    }
 
     async function saveSettings(updates){ const proto = window.location.protocol; const host = window.location.hostname; const isFrontendDev = (window.location.port === '3000'); const backendBase = `${proto}//${host}:5000`; const settingsGetUrl = isFrontendDev ? (backendBase + '/settings') : '/settings'; const settingsPostUrl = isFrontendDev ? (backendBase + '/settings') : '/settings'; try{ const r = await fetch(settingsGetUrl,{cache:'no-store'}).catch(e=>{throw e;}); const cur = r && r.ok ? await r.json().catch(()=>({})) : {}; const current = (cur && cur.settings) ? cur.settings : (cur || {});
         // Merge updates into current, preserving nested objects (eg. `storage`).

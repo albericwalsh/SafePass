@@ -36,6 +36,7 @@ def register(app):
                     break
                 except Exception:
                     existing = None
+                    log.warning(f"Failed to decrypt existing data at {p}, trying next path if available")
 
             if existing is None:
                 base = [{'sites': [], 'applications': [], 'autres': []}]
@@ -65,6 +66,7 @@ def register(app):
                         break
             except Exception:
                 updated = False
+                log.warning("Failed to update existing entry, will attempt to append as new entry")
 
             if not updated:
                 target['sites'].append(entry)
@@ -84,7 +86,7 @@ def register(app):
                 log.info('Données chiffrées et sauvegardées (merge)')
                 try:
                     if SETTINGS.get('backup_enabled'):
-                        backup_loc = SETTINGS.get('backup_location') or os.path.join(os.path.dirname(__file__), '..', 'data', 'backups')
+                        backup_loc = SETTINGS.get('backup_location') or SETTINGS.get('storage', {}).get('backup_location') or os.path.join(os.path.dirname(__file__), '..', 'data', 'backups')
                         os.makedirs(backup_loc, exist_ok=True)
                         ts = __import__('datetime').datetime.utcnow().strftime('%Y%m%d%H%M%S')
                         backup_name = f"data_encrypted_{ts}.sfpss"
@@ -92,6 +94,37 @@ def register(app):
                         with open(backup_path, 'wb') as bf:
                             bf.write(encrypted)
                         log.info(f'Backup créé: {backup_path}')
+                        try:
+                            # enforce backup history retention
+                            max_history = None
+                            try:
+                                max_history = int(SETTINGS.get('backup_history_count') or SETTINGS.get('storage', {}).get('backup_history_count') or 20)
+                            except Exception:
+                                max_history = 20
+                            if max_history and max_history > 0:
+                                # list backup files matching pattern
+                                all_files = []
+                                for fn in os.listdir(backup_loc):
+                                    if fn.startswith('data_encrypted_') and fn.endswith('.sfpss'):
+                                        fp = os.path.join(backup_loc, fn)
+                                        try:
+                                            mtime = os.path.getmtime(fp)
+                                            all_files.append((fp, mtime))
+                                        except Exception:
+                                            log.warning(f'Failed to get mtime for backup file {fp}, skipping retention check for this file')
+                                # sort by mtime ascending (oldest first)
+                                all_files.sort(key=lambda x: x[1])
+                                # delete oldest until count <= max_history
+                                if len(all_files) > max_history:
+                                    to_delete = len(all_files) - max_history
+                                    for i in range(to_delete):
+                                        try:
+                                            os.remove(all_files[i][0])
+                                            log.info(f'Retention: supprimé ancien backup {all_files[i][0]}')
+                                        except Exception as e:
+                                            log.warning(f'Failed to remove old backup {all_files[i][0]}: {e}')
+                        except Exception:
+                            log.warning('Failed to enforce backup retention policy, but backup was created successfully')
                 except Exception as be:
                     log.error('Backup failed: %s', be)
             except Exception:
@@ -99,8 +132,9 @@ def register(app):
                     if tmp_path and os.path.exists(tmp_path):
                         os.remove(tmp_path)
                 except Exception:
-                    pass
+                    log.warning(f'Failed to remove temporary file {tmp_path}')
                 raise
+            log.info('Données sauvegardées avec succès')
             return jsonify({'status': 'success'})
         except Exception as e:
             log.error('Erreur lors de la sauvegarde des données: %s', e)
@@ -133,8 +167,10 @@ def register(app):
                     data = decryptByPath(key, data_path)
                     break
                 except Exception:
+                    log.warning(f"Failed to decrypt data at {data_path}, trying next path if available")
                     continue
             if data is None:
+                log.warning("Aucun fichier data_encrypted.sfpss trouvé, initialisation structure vide")
                 raise FileNotFoundError("Aucun fichier data_encrypted.sfpss trouvé")
             log.info(f"Déchiffrement réussi - data type: {type(data).__name__}")
             if isinstance(data, dict):
@@ -148,6 +184,7 @@ def register(app):
                 length = len(response['data']) if hasattr(response['data'], '__len__') else 'unknown'
             except Exception:
                 length = 'unknown'
+                log.warning("Failed to determine length of response data")
             log.info(f"Réponse préparée - Type: {type(response['data']).__name__}, Length: {length}")
             return jsonify(response)
         except FileNotFoundError:

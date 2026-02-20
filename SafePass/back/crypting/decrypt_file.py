@@ -19,6 +19,10 @@ def decryptByPath(key, path):
         Exception: Pour toute autre erreur
     """
     try:
+        # Validate key early to provide a clearer error message
+        if key is None:
+            log.error('Encryption key is not initialized (None)')
+            raise ValueError('Encryption key is not initialized')
         cipher_suite = Fernet(key)
 
         # Lire les données chiffrées depuis le fichier
@@ -80,6 +84,10 @@ def decryptData(key, data):
         dict ou list: Données déchiffrées et parsées
     """
     try:
+        # Validate key early to provide a clearer error message
+        if key is None:
+            log.error('Encryption key is not initialized (None)')
+            raise ValueError('Encryption key is not initialized')
         cipher_suite = Fernet(key)
 
         # Déchiffrer les données

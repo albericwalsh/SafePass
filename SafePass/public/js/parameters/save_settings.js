@@ -1,11 +1,12 @@
 (function(){
     // Reusable settings save utility. Accepts partial updates object and returns a Promise resolving the server response JSON.
+    // Post only the delta (`updates`) to `/settings`. Backend will merge into existing settings.
     window.SP_saveSettings = function(updates){
-        return fetch('/settings').then(r=>r.json()).then(j=>{
-            const current = (j && j.settings) ? j.settings : (j || {});
-            Object.assign(current, updates || {});
-            return fetch('/settings', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(current) });
-        }).then(r=>r.json());
+        try{
+            return fetch('/settings', { method:'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updates) }).then(r=>r.json());
+        }catch(e){
+            return Promise.resolve(null);
+        }
     };
 
     // Save settings for a specific category and migrate top-level keys into the category object.
@@ -16,13 +17,10 @@
             const current = (j && j.settings) ? j.settings : (j || {});
             // ensure category object
             if (!current[category] || typeof current[category] !== 'object') current[category] = {};
-            // copy values into category
-            Object.keys(values || {}).forEach(k => { current[category][k] = values[k];
-                // remove top-level duplicate to enforce category-based structure
-                try{ if (k in current) delete current[k]; }catch(e){}
-            });
-            // Persist full settings object
-            const post = await fetch('/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(current) });
+            // Post only the category object as a delta; backend will merge into persisted settings.
+            const payload = {};
+            payload[category] = values || {};
+            const post = await fetch('/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
             return post && post.ok ? await post.json().catch(()=>({})) : {};
         }catch(e){ console.error('SP_saveCategorySettings error', e); return null; }
     };

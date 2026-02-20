@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Logs</title>
+    <link rel="stylesheet" type="text/css" href="./style/logs.css">
+</head>
+
+<body>
+    <h1>Logs</h1>
+    <div class="container">
+        <div class="controls">
+            <input id="from" type="datetime-local" />
+            <input id="to" type="datetime-local" />
+            <button id="applyFilter" class="secondary">Appliquer filtre</button>
+            <button id="clearFilter" class="secondary">Effacer</button>
+            <button id="refreshFiles">Actualiser</button>
+        </div>
+
+        <div class="viewer" style="margin-top:8px">
+            <div id="content" class="log-viewport">Chargement des logs...</div>
+        </div>
+    </div>
+
+    <script src="/js/logs.js"></script>
+</body>
+
+</html>

@@ -28,7 +28,7 @@ def register(app):
                     if not provided or not check_password_hash(expected_hash, provided):
                         return jsonify({'error': 'unauthorized'}), 401
             except Exception:
-                pass
+                log.warning('Password verification failed during export, but continuing with export process')
             data = payload.get('data') if isinstance(payload, dict) else None
             if data is None:
                 data_paths = get_data_paths() or []
@@ -38,6 +38,7 @@ def register(app):
                         data_val = decryptByPath(key, data_path)
                         break
                     except Exception:
+                        log.warning(f"Failed to decrypt data at {data_path} during export, trying next path if available")
                         continue
                 if data_val is None:
                     data_list = []
@@ -67,6 +68,7 @@ def register(app):
                     else:
                         writer.writerow([str(row)])
             csv_bytes = output.getvalue().encode('utf-8')
+            log.info(f"CSV export prepared with {len(data_list)} records, sending file response")
             return send_file(BytesIO(csv_bytes), mimetype='text/csv', as_attachment=True, download_name='SafePass_export.csv')
         except Exception as e:
             log.error('export_csv error: ' + str(e))
@@ -96,4 +98,5 @@ def register(app):
         except Exception as e:
             log.debug('favicon proxy fetch failed: ' + str(e))
         svg = svg_for_domain(domain)
+        log.info(f"Returning generated SVG favicon for domain '{domain}'")
         return Response(svg, mimetype='image/svg+xml')

@@ -1,3 +1,5 @@
+from app import log
+
 from flask import request, jsonify
 from flask_cors import cross_origin
 import os
@@ -31,14 +33,18 @@ def register(app):
                 try:
                     root.destroy()
                 except Exception:
+                    log.warning('Could not destroy tkinter root window')
                     pass
             except Exception as e:
+                log.error('Error opening native dialog: ' + str(e))
                 return jsonify({'status': 'error', 'error': 'Could not open native dialog: ' + str(e)}), 500
 
             if not path:
+                log.info('No path selected')
                 return jsonify({'status': 'cancelled', 'path': None}), 200
             return jsonify({'status': 'ok', 'path': path}), 200
         except Exception as e:
+            log.error('Error in select_path: ' + str(e))
             return jsonify({'status': 'error', 'error': str(e)}), 500
         
     @app.route('/validate-path', methods=['POST', 'OPTIONS'])
@@ -52,11 +58,13 @@ def register(app):
             p = payload.get('path')
             mode = payload.get('mode', 'file')
             if not p:
+                log.info('No path provided for validation')
                 return jsonify({'status': 'error', 'message': 'no path provided', 'path': None}), 400
             # normalize and return absolute path
             try:
                 abs_path = os.path.normpath(os.path.abspath(p))
-            except Exception:
+            except Exception as e:
+                log.error('Error normalizing path: ' + str(e))
                 abs_path = p
             exists = os.path.exists(abs_path)
             is_file = os.path.isfile(abs_path)
@@ -67,6 +75,8 @@ def register(app):
             else:
                 # file mode: accept existing file OR a valid file path (may not exist yet) - but prefer existing
                 valid = exists and is_file
+            log.info(f"validate_path: path='{p}', abs_path='{abs_path}', exists={exists}, is_file={is_file}, is_dir={is_dir}, valid={valid}")
             return jsonify({'status': 'ok', 'path': abs_path, 'exists': exists, 'is_file': is_file, 'is_dir': is_dir, 'valid': valid}), 200
         except Exception as e:
+            log.error('Error in validate_path: ' + str(e))
             return jsonify({'status': 'error', 'error': str(e)}), 500

@@ -19,6 +19,7 @@ def register(app):
 
             # decryptData expects bytes
             data = decryptData(key, encrypted_data.encode('utf-8'))
+            log.info("Donnée déchiffrée avec succès")
             return data
         except Exception as e:
             log.error("Erreur lors du déchiffrement de la donnée", e)
@@ -35,6 +36,7 @@ def register(app):
                 return jsonify({'error': 'no data'}), 400
 
             encrypted = cryptData(key, data.encode('utf-8'))
+            log.info("Donnée chiffrée avec succès")
             return jsonify({'status': 'success'})
         except Exception as e:
             log.error("Erreur lors du chiffrement de la donnée", e)
