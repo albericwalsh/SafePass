@@ -1,25 +1,26 @@
-# Documentation utilisateur — SafePass
+﻿# Documentation utilisateur â€” SafePass
 
 Cette documentation s'adresse aux utilisateurs de SafePass.
 
-Elle couvre l'installation, la prise en main, l'usage quotidien, l'extension navigateur, puis le dépannage.
+Elle couvre l'installation, la prise en main, l'usage quotidien, l'extension navigateur, puis le dÃ©pannage.
 
 ## Sommaire
 
-- [Installation](installation.md)
-- [Démarrage rapide](getting-started.md)
-- [Utilisation quotidienne](daily-use.md)
-- [Extension navigateur](browser-extension.md)
-- [FAQ](faq.md)
-- [Dépannage](troubleshooting.md)
+- [Installation](docs/user/installation.md)
+- [DÃ©marrage rapide](docs/user/getting-started.md)
+- [Utilisation quotidienne](docs/user/daily-use.md)
+- [Extension navigateur](docs/user/browser-extension.md)
+- [FAQ](docs/user/faq.md)
+- [DÃ©pannage](docs/user/troubleshooting.md)
 
-## Périmètre
+## PÃ©rimÃ¨tre
 
-Ce dossier est publié dans le dépôt public avec la licence.
+Ce dossier est publiÃ© dans le dÃ©pÃ´t public avec la licence.
 
-Règles éditoriales :
+RÃ¨gles Ã©ditoriales :
 
-- contenu orienté utilisateur final,
+- contenu orientÃ© utilisateur final,
 - aucune information sensible,
-- aucune procédure interne de développement.
+- aucune procÃ©dure interne de dÃ©veloppement.
+
 
