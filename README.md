@@ -92,9 +92,12 @@ Sortie attendue : exécutables dans `dist/SafePass/`.
 
 ## Licence
 
-Ce projet est propriétaire (non open source).
+Ce logiciel est distribué sous licence propriétaire.
 
-- Titulaire des droits : Albéric WALSH DE SERRANT.
-- Toute contribution est interdite sans validation explicite préalable avec trace écrite.
+L’utilisation est autorisée, gratuitement, sans droit de modification,
+de copie, de redistribution ou d’exploitation commerciale.
 
-Voir [LICENSE](LICENSE).
+Tous les droits sont réservés.
+© Albéric WALSH DE SERRANT
+
+Voir la [LICENSE](LICENSE).
