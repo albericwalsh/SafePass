@@ -1,0 +1,44 @@
+{
+  "display": {
+    "theme": "dark"
+  },
+  "general": {
+    "auto_update_check": false,
+    "debug_mode": false,
+    "detect_enabled": true,
+    "items_per_page": 20,
+    "language": "en",
+    "open_front_on_start": true,
+    "start_on_boot": true
+  },
+  "security": {
+    "auto_lock_minutes": 5,
+    "master_password_enabled": false,
+    "password_blacklist": [],
+    "password_history_length": 5,
+    "password_min_length": 12,
+    "require_lowercase": true,
+    "require_numbers": true,
+    "require_password_on_export": false,
+    "require_symbols": true,
+    "require_uppercase": true,
+    "strength_threshold_orange": 45,
+    "strength_threshold_red": 20,
+    "strength_threshold_yellow": 75
+  },
+  "storage": {
+    "data_path": "",
+    "token_path": "",
+    "backup_enabled": true,
+    "backup_interval_days": 7,
+    "backup_location": "",
+    "backup_history_count": 20
+  },
+  "advanced": {
+    "log_dir": "",
+    "max_size_mb": 1,
+    "retention_days": 15,
+    "to_file": true,
+    "log_level": "INFO"
+  }
+}

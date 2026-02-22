@@ -32,6 +32,7 @@
                 _pathSelecting = true;
                 btn.setAttribute('disabled','true');
                 const directory = opts && opts.directory;
+                const onlySfpss = !!(opts && opts.only_sfpss);
                 try{
                     // Host-provided selector (Electron or native host) - prefer this (can return full path)
                     if (window.selectPath && typeof window.selectPath === 'function'){
@@ -46,14 +47,33 @@
                         const backendBase = `${proto}//${host}:5000`;
                         const useBackend = (host === 'localhost' || host === '127.0.0.1' || window.location.port === '3000');
                         const url = useBackend ? (backendBase + '/select-path') : '/select-path';
-                        const resp = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ mode: directory ? 'directory' : 'file' }) });
-                        if (resp && resp.ok){ const body = await resp.json().catch(()=>null); if (body && body.status === 'ok' && body.path){ window.SP_params && window.SP_params.setVal && window.SP_params.setVal(id, body.path); return; } }
+                        const resp = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ mode: directory ? 'directory' : 'file', only_sfpss: onlySfpss }) });
+                        if (resp && resp.ok){
+                            const body = await resp.json().catch(()=>null);
+                            if (body && body.status === 'ok' && body.path){
+                                window.SP_params && window.SP_params.setVal && window.SP_params.setVal(id, body.path);
+                                return;
+                            }
+                            if (body && body.status === 'cancelled'){
+                                return;
+                            }
+                            // Backend answered: avoid opening a second picker on the frontend.
+                            return;
+                        }
                     }catch(e){}
 
                     // File System Access API (Chromium) - file picker
                     if (window.showOpenFilePicker && !directory){
                         try{
-                            const handles = await window.showOpenFilePicker();
+                            const pickerOptions = onlySfpss ? {
+                                types: [{
+                                    description: 'SafePass encrypted files',
+                                    accept: { 'application/octet-stream': ['.sfpss'] }
+                                }],
+                                excludeAcceptAllOption: false,
+                                multiple: false
+                            } : undefined;
+                            const handles = await window.showOpenFilePicker(pickerOptions);
                             if (handles && handles.length){
                                 const h = handles[0];
                                 // try to read a better label (not full path, may be limited by browser)
@@ -71,7 +91,7 @@
 
                     // Fallback: input[type=file]
                     try{
-                        const tmp = document.createElement('input'); tmp.type = 'file'; if (directory) tmp.webkitdirectory = true; tmp.style.display='none'; document.body.appendChild(tmp);
+                        const tmp = document.createElement('input'); tmp.type = 'file'; if (directory) tmp.webkitdirectory = true; if (!directory && onlySfpss) tmp.accept = '.sfpss'; tmp.style.display='none'; document.body.appendChild(tmp);
                         tmp.addEventListener('change', function(){ try{ const f = tmp.files && tmp.files[0]; if (f){ const v = f.webkitRelativePath || f.name || ''; window.SP_params && window.SP_params.setVal && window.SP_params.setVal(id, v); } }catch(e){} try{ document.body.removeChild(tmp); }catch(e){} });
                         tmp.click();
                     }catch(e){}
@@ -200,7 +220,7 @@
             const isFrontendDev = (window.location.port === '3000');
             const backendBase = `${proto}//${host}:5000`;
             const url = isFrontendDev ? (backendBase + '/validate-path') : '/validate-path';
-            const resp = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path: path, mode: (opts && opts.directory) ? 'directory' : 'file' }) });
+            const resp = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ path: path, mode: (opts && opts.directory) ? 'directory' : 'file', only_sfpss: !!(opts && opts.only_sfpss) }) });
             if (!resp || !resp.ok) return null;
             const body = await resp.json().catch(()=>null);
             return body;

@@ -13,7 +13,7 @@ mkdir data -ErrorAction Ignore
 # Générer la clé de chiffrement (créera `data/.token`)
 python "back/crypting/generate a crypting key.py" > data/.token
 # Lancer l'application
-python app.py
+python SafePass.py
 ```
 
 - **Remarques :**

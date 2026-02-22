@@ -1,6 +1,6 @@
 import json
 from cryptography.fernet import Fernet
-import log
+from back import log
 
 
 def decryptByPath(key, path):

@@ -85,6 +85,16 @@ function promptForMasterPassword() {
 function ensureAuthToken(promptIfMissing = true) {
 	return new Promise((resolve) => {
 		try {
+			const readMasterEnabled = function(settingsPayload){
+				try {
+					const root = (settingsPayload && settingsPayload.settings) ? settingsPayload.settings : (settingsPayload || {});
+					const sec = (root && root.security && typeof root.security === 'object') ? root.security : {};
+					if (typeof sec.master_password_enabled !== 'undefined') return !!sec.master_password_enabled;
+					if (typeof root.master_password_enabled !== 'undefined') return !!root.master_password_enabled;
+				} catch (e) {}
+				return null;
+			};
+
 			const existingRaw = (typeof localStorage !== 'undefined') ? localStorage.getItem('sp_auth_session') : null;
 			if (existingRaw) {
 				try {
@@ -115,7 +125,7 @@ function ensureAuthToken(promptIfMissing = true) {
 							return r.ok ? r.json() : null;
 						}).then(function(j){
 							try {
-								const enabled = j && j.settings && typeof j.settings.master_password_enabled !== 'undefined' ? !!j.settings.master_password_enabled : null;
+								const enabled = readMasterEnabled(j);
 									if (enabled === false) return resolve('__MASTER_DISABLED__');
 								  if (!promptIfMissing) return resolve(null);
 								  promptForMasterPassword().then(token => resolve(token));
@@ -161,7 +171,10 @@ function saveAllData() {
 
 function loadAllData() {
 	try {
-		ensureAuthToken().then(function(token) {
+		if (window.SP_loadAllData_inflight) return;
+		const runGetData = function(){
+			window.SP_loadAllData_inflight = true;
+			ensureAuthToken().then(function(token) {
 			if (token === null) { showAlertMessage('Authentification annulée', '--sp-warning'); return; }
 			const headerToken = (token === '__MASTER_DISABLED__') ? null : token;
 			$.ajax({
@@ -180,19 +193,46 @@ function loadAllData() {
 						}
 						displayCategory(currentCategory);
 					} catch (e) { console.error('loadAllData success handler error', e); }
+					finally { window.SP_loadAllData_inflight = false; }
 				},
 				error: function(error) {
 					if (error && error.status === 401) {
-						ensureAuthToken(true).then(function(newToken){ if (newToken) loadAllData(); else showAlertMessage('Authentification requise', '--sp-error'); });
+						try { localStorage.removeItem('sp_auth_session'); } catch (e) {}
+						if (window.SP_loadAllData_retrying_auth) {
+							window.SP_loadAllData_inflight = false;
+							return;
+						}
+						window.SP_loadAllData_retrying_auth = true;
+						ensureAuthToken(true).then(function(newToken){
+							window.SP_loadAllData_retrying_auth = false;
+							window.SP_loadAllData_inflight = false;
+							if (newToken) loadAllData(); else showAlertMessage('Authentification requise', '--sp-error');
+						});
 						return;
 					}
 					console.error('Erreur lors du chargement des données:', error);
 					let STATUS = error && error.status ? error.status : 'Erreur inconnue';
 					if (error && error.status === 0) STATUS = 'Erreur de connexion';
 					showAlertMessage('Erreur lors du chargement des données: ' + STATUS, '--sp-error');
+					window.SP_loadAllData_inflight = false;
 				}
 			});
-		});
+			}).catch(function(){ window.SP_loadAllData_inflight = false; });
+		};
+
+		if (window.SP_storageReadyPromise && typeof window.SP_storageReadyPromise.then === 'function') {
+			window.SP_storageReadyPromise
+				.then(function(isReady){
+					if (!isReady) return;
+					runGetData();
+				})
+				.catch(function(){
+					// fallback: do nothing to avoid hammering getData when startup state is unknown
+				});
+			return;
+		}
+
+		runGetData();
 	} catch (e) { console.error('Erreur lors du chargement des données', e); }
 }
 

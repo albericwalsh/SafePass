@@ -174,7 +174,7 @@
             let masterConfigured = false;
             const populate = (settings)=>{
                 const root = settings || {};
-                const s = (root && root.security) ? root.security : root;
+                const s = (root && root.security) ? root.security : {};
                 try{
                     // Ensure aws widgets are (re)initialized before populating values so setVal works reliably
                     try{ if (window.SP_params && typeof window.SP_params.initAwsWidgets === 'function') window.SP_params.initAwsWidgets(area); }catch(e){}

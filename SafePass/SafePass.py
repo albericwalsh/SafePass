@@ -1,6 +1,7 @@
-import log
+from back import log
 import sys
 import os
+import ctypes
 
 # If running in a frozen environment (PyInstaller), add library paths
 if getattr(sys, 'frozen', False):
@@ -8,10 +9,39 @@ if getattr(sys, 'frozen', False):
     bundle_dir = sys._MEIPASS
     sys.path.insert(0, bundle_dir)  # This allows imports from the bundle
 
-import app
+from back import app
 import subprocess
 import time
 import threading
+
+
+def _enable_cli_console_if_requested():
+    try:
+        wants_cli = ('--cli' in sys.argv) or (os.environ.get('SAFEPASS_CLI') in ('1', 'true', 'True'))
+        if not wants_cli:
+            return False
+
+        if '--cli' in sys.argv:
+            try:
+                sys.argv.remove('--cli')
+            except Exception:
+                pass
+
+        kernel32 = ctypes.windll.kernel32
+        attached = bool(kernel32.AttachConsole(-1))
+        if not attached:
+            kernel32.AllocConsole()
+
+        try:
+            sys.stdout = open('CONOUT$', 'w', encoding='utf-8', buffering=1)
+            sys.stderr = open('CONOUT$', 'w', encoding='utf-8', buffering=1)
+            sys.stdin = open('CONIN$', 'r', encoding='utf-8', buffering=1)
+        except Exception:
+            pass
+
+        return True
+    except Exception:
+        return False
 
 def start_frontend():
     """Lance le serveur frontend Express.js"""
@@ -62,7 +92,7 @@ def is_backend_running():
     try:
         import requests
         r = requests.get('http://127.0.0.1:5000/test', timeout=1)
-        return r.status_code == 200
+        return r is not None
     except Exception:
         return False
 
@@ -73,7 +103,7 @@ def wait_for_backend():
     for attempt in range(max_attempts):
         try:
             response = requests.get('http://127.0.0.1:5000/test', timeout=2)
-            if response.status_code == 200:
+            if response is not None:
                 print(f"✓ Backend Flask prêt après {attempt+1} tentatives")
                 log.info("Backend Flask prêt")
                 return True
@@ -85,6 +115,7 @@ def wait_for_backend():
     return False
 
 def main():
+    _enable_cli_console_if_requested()
     # Créer un fichier de log
     log.info('SafePass starting')
     try:
@@ -110,24 +141,32 @@ def main():
         # Attendre que le backend soit prêt
         print("Attente du démarrage du backend Flask...")
         if wait_for_backend():
-            print("Backend Flask prêt - lancement du frontend...")
-            # Lancer le frontend une fois le backend prêt
-            start_frontend()
+            cfg_open = True
+            try:
+                cfg_open = bool(app.SETTINGS.get('open_front_on_start', True))
+            except Exception:
+                cfg_open = True
+
+            launch_frontend = (not started_by_system) or cfg_open
+
+            if launch_frontend:
+                print("Backend Flask prêt - lancement du frontend...")
+                # Lancer le frontend une fois le backend prêt
+                start_frontend()
+            else:
+                print("Backend Flask prêt - frontend ignoré (startup + open_front_on_start=false)")
+                log.info("Frontend non lancé au démarrage système (open_front_on_start=false)")
 
             # Attendre que le frontend réponde puis ouvrir le navigateur only for manual starts
             try_open = False
             try:
                 # respect runtime setting but do not open when started automatically
-                try:
-                    cfg_open = bool(app.SETTINGS.get('open_front_on_start', True))
-                except Exception:
-                    cfg_open = True
                 if (not started_by_system) and cfg_open:
                     try_open = True
             except Exception:
                 try_open = False
 
-            if try_open and wait_for_frontend():
+            if launch_frontend and try_open and wait_for_frontend():
                 try:
                     import webbrowser
                     webbrowser.open('http://localhost:3000')
@@ -135,7 +174,10 @@ def main():
                 except Exception as e:
                     log.error(f"Impossible d'ouvrir le navigateur: {e}")
             else:
-                log.info("Frontend démarré mais navigateur non ouvert (automated start or disabled)")
+                if launch_frontend:
+                    log.info("Frontend démarré mais navigateur non ouvert (automated start or disabled)")
+                else:
+                    log.info("Mode backend-only actif pour ce démarrage")
         else:
             print("Erreur: Backend non disponible")
             log.error("Impossible de démarrer le frontend - backend non disponible")

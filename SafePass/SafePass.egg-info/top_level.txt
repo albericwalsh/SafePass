@@ -1,5 +1,0 @@
-back
-data
-node_modules
-public
-res

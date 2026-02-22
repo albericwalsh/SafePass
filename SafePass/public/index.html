@@ -25,7 +25,10 @@
 <body>
 <header class="navbar navbar-dark sp-bg-dark fixed-top">
     <div class="header-content">
-        <a class="navbar-brand" href="#" data-i18n="brand">SafePass</a>
+        <a id="brand-home" class="navbar-brand sp-brand" href="#">
+            <img class="sp-brand-icon" id="sp-brand-icon" src="" alt="SafePass" />
+            <span data-i18n="brand">SafePass</span>
+        </a>
         <div class="search-bar-header">
             <aws-button id="settings-button" data-i18n="settings">Paramètres</aws-button>
         </div>
@@ -35,7 +38,7 @@
     <div class="row">
         <nav class="col-md-2 d-none d-md-block sidebar sp-bg-medium">
             <div class="sidebar-sticky">
-                <ul class="nav flex-column" style="margin-top: 56px;">
+                <ul class="nav flex-column" style="margin-top: var(--header-height);">
                     <li class="nav-item d-flex justify-content-between align-items-center">
                         <aws-button class="nav-link sp-link" data-category="sites" variant="primary" data-i18n="sites">Sites</aws-button>
                         <aws-icon-button class="add-btn" size="sm" variant="primary" data-category="sites"><span class="material-icons">add</span></aws-icon-button>
@@ -55,6 +58,7 @@
             <div class="search-bar">
                 <aws-search id="search-input" data-i18n="search_placeholder" data-i18n-target="placeholder" placeholder="Rechercher..." variant="primary" clearable debounce="300"></aws-search>
             </div>
+            <div id="stats-view" class="sp-stats-view" style="display: none;"></div>
             <aws-table id="dynamic-table">
                 <aws-table-head>
                     <aws-table-row id="table-headers">
@@ -73,6 +77,9 @@
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="./js/theme.js"></script>
 <script src="./js/auto_lock.js"></script>
+<script src="./js/display/anssi.js"></script>
+<script src="./js/display/rss_leaks.js"></script>
+<script src="./js/display/stats.js"></script>
 <script src="./js/display.js"></script>
 <script src="./js/saving.js"></script>
 <script src="./js/password.js"></script>
@@ -84,11 +91,20 @@
 <script>
 
     let allData = []; // Store all data for search
-    let currentCategory = 'sites'; // Default category
+    let currentCategory = 'stats'; // Default category
     let sortOrder = {}; // Object to track sort orders
     let deleteCancelTmp = null; // Temporary variable to store the delete cancel function
 
     $(document).ready(function () {
+
+        try {
+            const iconEl = document.getElementById('sp-brand-icon');
+            if (iconEl) {
+                const isFrontendDev = (window.location.port === '3000');
+                const backendBase = `${window.location.protocol}//${window.location.hostname}:5000`;
+                iconEl.src = isFrontendDev ? (backendBase + '/brand-icon') : '/brand-icon';
+            }
+        } catch (e) {}
 
         // Sorting temporarily disabled (was attached to .sortable headers)
 
@@ -133,6 +149,13 @@
             window.location.href = '/parameters.html';
         });
 
+        // Brand click => show statistics page
+        $('#brand-home').on('click', function (e) {
+            e.preventDefault();
+            $('nav [data-category]').removeClass('active');
+            displayCategory('stats');
+        });
+
         // ✅ CHARGEMENT INITIAL DES DONNÉES
         (async function(){
             try {
@@ -144,6 +167,12 @@
             } catch(e) {
                 // proceed even if waiting fails
             }
+            try {
+                if (window.SP_storageReadyPromise && typeof window.SP_storageReadyPromise.then === 'function') {
+                    const isReady = await window.SP_storageReadyPromise;
+                    if (!isReady) return;
+                }
+            } catch(e) {}
             loadAllData();
         })();
 

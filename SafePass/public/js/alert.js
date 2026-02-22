@@ -1,10 +1,10 @@
 function showAlertMessage(message, color = '--sp-info') {
-    // Crée la div pour le fond (backdrop)
-    const backdropHtml = '<div class="backdrop" id="backdrop"></div>';
+    // Crée la div pour le fond (backdrop) - solide et au-dessus
+    const backdropHtml = '<div id="backdrop" style="position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99998;"></div>';
 
     // Crée la div pour l'alerte avec le message passé en paramètre
     const alertHtml = `
-        <div class="upper-center-window " style="box-shadow: 0 0 50px 0 var(` + color + `);" id="alert">
+        <div id="alert" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100001;max-width:520px;width:90%;box-shadow: 0 0 50px 0 var(${color});">
             <div class="alert-content">
                 <p>${message}</p>
                 <div class="alert-buttons">
@@ -27,14 +27,16 @@ function showAlertMessage(message, color = '--sp-info') {
 function showDurationAlertMessage(message, timer = 2000, color = '--sp-info') {
     // Crée la div pour l'alerte avec le message passé en paramètre
     const alertHtml = `
-        <div class="upper-top-window" style="box-shadow: 0 0 50px 0 var(${color}); transition: opacity 0.5s ease;" id="alert">
-            <div class="alert-content">
-                <p>${message}</p>
+        <div id="alert" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100001;max-width:420px;width:80%;box-shadow: 0 0 50px 0 var(${color}); transition: opacity 0.5s ease;">
+            <div class="alert-content" style="text-align:center;padding:12px 16px;">
+                <p style="margin:0;">${message}</p>
             </div>
         </div>
     `;
 
-    // Ajoute la fenêtre d'alerte au body
+    // Ajoute le backdrop solide et la fenêtre d'alerte au body (évite les doublons)
+    const localBackdrop = '<div id="backdrop" style="position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99998;"></div>';
+    if (!document.getElementById('backdrop')) $('body').append(localBackdrop);
     $('body').append(alertHtml);
 
     // Attendre avant de démarrer l'animation de fade
@@ -42,9 +44,10 @@ function showDurationAlertMessage(message, timer = 2000, color = '--sp-info') {
         $('#alert').css('opacity', '0');  // Applique l'effet de fondu
     }, timer);
 
-    // Supprimer complètement l'alerte après l'animation
+    // Supprimer complètement l'alerte et le backdrop après l'animation
     setTimeout(function () {
         $('#alert').remove();
+        $('#backdrop').remove();
     }, timer + 500); // 500ms pour correspondre au temps de transition
 }
 
@@ -53,7 +56,7 @@ function showCancelDurationAlertMessage(message, timer = 2000, color = '--sp-ale
 }) {
     // Crée la div pour l'alerte avec le message passé en paramètre
     const alertHtml = `
-        <div class="upper-top-window" style="box-shadow: 0 0 50px 0 var(${color}); transition: opacity 0.5s ease;" id="alert">
+        <div id="alert" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100001;max-width:520px;width:90%;box-shadow: 0 0 50px 0 var(${color}); transition: opacity 0.5s ease;">
             <div class="alert-content">
                 <p>${message}</p>
                 <div class="alert-buttons">
@@ -63,7 +66,9 @@ function showCancelDurationAlertMessage(message, timer = 2000, color = '--sp-ale
         </div>
     `;
 
-    // Ajoute la fenêtre d'alerte au body
+    // Ajoute le backdrop solide et la fenêtre d'alerte au body (évite les doublons)
+    const localBackdrop2 = '<div id="backdrop" style="position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99998;"></div>';
+    if (!document.getElementById('backdrop')) $('body').append(localBackdrop2);
     $('body').append(alertHtml);
 
     // Attendre avant de démarrer l'animation de fade
@@ -71,9 +76,10 @@ function showCancelDurationAlertMessage(message, timer = 2000, color = '--sp-ale
         $('#alert').css('opacity', '0');  // Applique l'effet de fondu
     }, timer);
 
-    // Supprimer complètement l'alerte après l'animation
+    // Supprimer complètement l'alerte et le backdrop après l'animation
     setTimeout(function () {
         $('#alert').remove();
+        $('#backdrop').remove();
     }, timer + 500); // 500ms pour correspondre au temps de transition
 
 
@@ -91,12 +97,12 @@ function showAlertConfirm(message, confirmText = 'OK', cancelText = 'Cancel', co
 }, onCancel = () => {
     console.log("cancel");
 }) {
-    // Crée la div pour le fond (backdrop)
-    const backdropHtml = '<div class="backdrop" id="backdrop"></div>';
+    // Crée la div pour le fond (backdrop) - solide et au-dessus
+    const backdropHtml = '<div id="backdrop" style="position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:99998;"></div>';
 
     // Crée la div pour l'alerte avec le message et deux boutons (OK et Cancel)
     const alertHtml = `
-        <div class="upper-center-window" style="box-shadow: 0 0 50px 0 var(` + color + `);" id="alert">
+        <div class="" id="alert" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100001;max-width:520px;width:90%;box-shadow: 0 0 50px 0 var(` + color + `);">
             <div class="alert-content">
                 <p>${message}</p>
                 <div class="alert-buttons">
@@ -107,8 +113,9 @@ function showAlertConfirm(message, confirmText = 'OK', cancelText = 'Cancel', co
         </div>
     `;
 
-    // Ajoute le backdrop et la fenêtre d'alerte au body
-    $('body').append(backdropHtml, alertHtml);
+    // Ajoute le backdrop solide et la fenêtre d'alerte au body (évite les doublons)
+    if (!document.getElementById('backdrop')) $('body').append(backdropHtml);
+    $('body').append(alertHtml);
 
     // Gère la confirmation (OK)
     $('#confirmButton').on('click', function () {

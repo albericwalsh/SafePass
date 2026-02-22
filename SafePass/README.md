@@ -42,3 +42,19 @@ Remarques :
 Fichiers utiles :
 - `SafePass.spec` — spec PyInstaller utilisée pour la build.
 - `VERSION` — fichier contenant la version actuelle (mis à jour automatiquement par `pybuilder --bump`).
+
+Exécutables générés :
+- `SafePass.exe` : lance backend + frontend.
+- `SafePassBackend.exe` : lance uniquement le backend (sans frontend).
+
+Mode CLI (console à la demande) :
+- `SafePass.exe --cli`
+- `SafePassBackend.exe --cli`
+
+Ce paramètre ouvre/attache une console Windows pour voir les sorties et logs en direct, tout en gardant le mode GUI par défaut sans console.
+
+Après build avec `SafePass.spec`, les deux exécutables sont produits dans `dist/SafePass/`.
+
+Usage conseillé pour le démarrage Windows :
+- `open_front_on_start = true` → démarrage avec `SafePass.exe`.
+- `open_front_on_start = false` → démarrage avec `SafePassBackend.exe`.

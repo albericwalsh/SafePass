@@ -28,13 +28,16 @@
 <body>
 <header class="navbar navbar-dark sp-bg-dark fixed-top">
     <div class="header-content">
-        <a class="navbar-brand" href="./index.html">SafePass</a>
+        <a class="navbar-brand sp-brand" href="./index.html">
+            <img class="sp-brand-icon" id="sp-brand-icon" src="" alt="SafePass" />
+            <span>SafePass</span>
+        </a>
     </div>
 </header>
 <div class="container-fluid">
     <div class="row">
         <nav class="col-md-2 d-none d-md-block sidebar sp-bg-medium">
-            <div class="sidebar-sticky" style="padding:0 8px; margin-top:56px;">
+            <div class="sidebar-sticky" style="padding:0 8px; margin-top: var(--header-height);">
                 <ul class="nav flex-column" id="params-sidebar">
                     <!-- sidebar items injected by JS -->
                 </ul>
@@ -56,5 +59,16 @@
 <script src="/js/theme.js"></script>
 <script type="module" src="js/parameters_main.js"></script>
 <script type="module" src="js/parameters/categories/extension.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        try {
+            const iconEl = document.getElementById('sp-brand-icon');
+            if (!iconEl) return;
+            const isFrontendDev = (window.location.port === '3000');
+            const backendBase = `${window.location.protocol}//${window.location.hostname}:5000`;
+            iconEl.src = isFrontendDev ? (backendBase + '/brand-icon') : '/brand-icon';
+        } catch (e) {}
+    });
+</script>
 </body>
 </html>

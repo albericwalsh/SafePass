@@ -1,7 +1,7 @@
 @import url("colors.css");
 
 :root {
-    --header-height: 56px;
+    --header-height: 84px;
 }
 body {
     margin: 0;
@@ -70,7 +70,7 @@ header.navbar::after {
     left: 16px; /* add left spacing */
     width: 240px; /* wider fixed sidebar */
     height: auto; /* size according to content */
-    max-height: calc(100vh - 88px);
+    max-height: calc(100vh - (var(--header-height) + 32px));
     overflow-y: auto; /* allow vertical scroll if content exceeds viewport */
     overflow-x: hidden; /* remove horizontal overflow */
     background: var(--sp-sidebar-bg);
@@ -86,7 +86,7 @@ header.navbar::after {
 }
 
 .main {
-    margin-top: 56px;
+    margin-top: var(--header-height);
 }
 
 /* Shift main content to the right to avoid being covered by the fixed sidebar on medium+ screens */
@@ -100,12 +100,305 @@ header.navbar::after {
     margin-top: 20px;
 }
 
+.sp-stats-view {
+    margin-top: 20px;
+}
+
+.sp-stats-page {
+    background: var(--sp-sidebar-bg);
+    border: 1px solid var(--sp-navbar-border);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.sp-stats-title {
+    margin: 0 0 12px 0;
+    color: var(--sp-light);
+}
+
+.sp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.sp-stats-card {
+    border: 1px solid var(--sp-navbar-border);
+    border-radius: 10px;
+    padding: 12px;
+    background: var(--sp-header-bg);
+}
+
+.sp-stats-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.sp-stats-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.sp-strength-grid {
+    margin-top: 12px;
+}
+
+.sp-expiring-grid {
+    margin-top: 12px;
+}
+
+.sp-expiring-card {
+    cursor: pointer;
+    transition: border-color 140ms ease, transform 140ms ease;
+}
+
+.sp-expiring-card:hover,
+.sp-expiring-card:focus {
+    border-color: var(--sp-accent);
+    transform: translateY(-1px);
+}
+
+.sp-strength-danger {
+    color: var(--sp-error);
+}
+
+.sp-strength-warn {
+    color: var(--sp-alert);
+}
+
+.sp-strength-good {
+    color: var(--sp-success);
+}
+
+.sp-anssi-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.sp-anssi-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sp-anssi-icon {
+    font-size: 18px;
+    color: var(--sp-accent);
+}
+
+.sp-anssi-logo {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: contain;
+    border-radius: 4px;
+    background: var(--sp-light);
+    padding: 2px;
+}
+
+.sp-anssi-details {
+    margin-top: 14px;
+    border-top: 1px solid var(--sp-navbar-border);
+    padding-top: 12px;
+}
+
+.sp-anssi-title {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: var(--sp-light);
+}
+
+.sp-anssi-layout {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.sp-anssi-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sp-anssi-logo-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    align-self: flex-start;
+    width: 56px;
+    height: 56px;
+}
+
+.sp-anssi-list {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--sp-light);
+}
+
+.sp-anssi-list li {
+    margin-bottom: 4px;
+}
+
+.sp-anssi-meta {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.sp-anssi-meta a {
+    color: var(--sp-accent);
+}
+
+.sp-anssi-loading {
+    color: var(--sp-light);
+    opacity: 0.9;
+}
+
+.sp-leaks-feed {
+    margin-top: 10px;
+}
+
+.sp-leaks-list li {
+    margin-bottom: 8px;
+}
+
+.sp-leaks-list a {
+    color: var(--sp-accent);
+    text-decoration: none;
+}
+
+.sp-leaks-list a:hover,
+.sp-leaks-list a:focus {
+    text-decoration: underline;
+}
+
+.sp-leaks-meta {
+    margin-top: 2px;
+    font-size: 0.82rem;
+    opacity: 0.85;
+    color: var(--sp-light);
+}
+
+.sp-news-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 320px);
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+.sp-news-card {
+    width: 320px;
+    border: 1px solid var(--sp-navbar-border);
+    border-radius: 10px;
+    background: var(--sp-header-bg);
+    overflow: hidden;
+}
+
+.sp-news-card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
+.sp-news-card-link:hover,
+.sp-news-card-link:focus {
+    outline: none;
+}
+
+.sp-news-card-illustration {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--sp-sidebar-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--sp-navbar-border);
+}
+
+.sp-news-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.sp-news-illustration-fallback .material-icons,
+.sp-news-card-illustration .material-icons {
+    font-size: 42px;
+    color: var(--sp-accent);
+}
+
+.sp-news-card-body {
+    padding: 10px;
+}
+
+.sp-news-card-actions {
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.sp-news-card-title {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--sp-light);
+    line-height: 1.25;
+}
+
+.sp-news-card-title-link {
+    color: var(--sp-light);
+    text-decoration: none;
+}
+
+.sp-news-card-title-link:hover,
+.sp-news-card-title-link:focus {
+    color: var(--sp-accent);
+    text-decoration: underline;
+}
+
+.sp-pwned-open-btn {
+    border: 1px solid var(--sp-navbar-border);
+    background: var(--sp-header-bg);
+    color: var(--sp-light);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 0.88rem;
+    cursor: pointer;
+}
+
+.sp-pwned-open-btn:hover,
+.sp-pwned-open-btn:focus {
+    border-color: var(--sp-accent);
+    outline: none;
+}
+
 .header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
     transition: transform 300ms cubic-bezier(.2,.8,.2,1);
+}
+
+.sp-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sp-brand-icon {
+    width: 66px;
+    height: 66px;
+    object-fit: contain;
+    display: inline-block;
+    filter: brightness(0) invert(1);
 }
 
 .nav-item {
@@ -228,10 +521,13 @@ header.navbar::after {
 
 .alert-windows{
     background-color: var(--sp-success);
+    border-radius: 25px;
 }
 
 .alert-content {
     text-align: center;
+    background-color: var(--sp-dark);
+    border-radius: 25px;
 }
 
 /* Ensure main content starts below the fixed header */

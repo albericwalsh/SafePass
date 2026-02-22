@@ -29,22 +29,38 @@ const getSettingsLang = async () => {
             try { const txt = await res.text(); return JSON.parse(txt); } catch(e){ return null; }
         };
 
+        const pickLang = (payload) => {
+            try {
+                const base = (payload && payload.settings) ? payload.settings : payload;
+                if (!base || typeof base !== 'object') return null;
+                const general = (base.general && typeof base.general === 'object') ? base.general : null;
+                const fromGeneral = general && typeof general.language === 'string' ? general.language : null;
+                if (fromGeneral && fromGeneral.trim()) return fromGeneral.trim();
+                const fromTop = typeof base.language === 'string' ? base.language : null;
+                if (fromTop && fromTop.trim()) return fromTop.trim();
+            } catch(e){}
+            return null;
+        };
+
         if (isFrontendDev) {
             try {
                 const r = await fetch(backendBase + '/settings', {cache: 'no-store'});
                 const p = await safeParse(r);
-                if (p && p.settings && p.settings.language) return p.settings.language;
+                const lang = pickLang(p);
+                if (lang) return lang;
             } catch(e){}
         }
         try {
             const r = await fetch('/settings', {cache: 'no-store'});
             const p = await safeParse(r);
-            if (p && p.settings && p.settings.language) return p.settings.language;
+            const lang = pickLang(p);
+            if (lang) return lang;
         } catch(e){}
         try {
             const r = await fetch(backendBase + '/settings', {cache: 'no-store'});
             const p = await safeParse(r);
-            if (p && p.settings && p.settings.language) return p.settings.language;
+            const lang = pickLang(p);
+            if (lang) return lang;
         } catch(e){}
     } catch(e){}
     return null;

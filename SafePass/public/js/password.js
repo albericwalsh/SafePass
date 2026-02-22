@@ -2,7 +2,8 @@ function getPasswordStrength(password) {
     // Read cached policy if available, else use sensible defaults
     const policy = (window.SP_password_policy_cache) ? window.SP_password_policy_cache : (window.SP_password_policy_cache = (function(){
         try{
-            const s = (window.SP_settings && typeof window.SP_settings === 'object') ? window.SP_settings : null;
+            const root = (window.SP_settings && typeof window.SP_settings === 'object') ? window.SP_settings : null;
+            const s = (root && root.security && typeof root.security === 'object') ? root.security : {};
             // non-blocking: if SP_settings not present, fall back to defaults
             return {
                 min_length: s && s.password_min_length || 12,
@@ -49,7 +50,8 @@ function getPasswordStrength(password) {
 function getPasswordStrengthPercent(password) {
     const policy = (window.SP_password_policy_cache) ? window.SP_password_policy_cache : (window.SP_password_policy_cache = (function(){
         try{
-            const s = (window.SP_settings && typeof window.SP_settings === 'object') ? window.SP_settings : null;
+            const root = (window.SP_settings && typeof window.SP_settings === 'object') ? window.SP_settings : null;
+            const s = (root && root.security && typeof root.security === 'object') ? root.security : {};
             return {
                 min_length: s && s.password_min_length || 12,
                 require_uppercase: s && (typeof s.require_uppercase !== 'undefined') ? !!s.require_uppercase : true,
@@ -107,7 +109,7 @@ function getPasswordStrengthPercent(password) {
 function generatePassword() {
     // Build policy from cached settings or defaults
     const policy = (window.SP_password_policy_cache) ? window.SP_password_policy_cache : (window.SP_password_policy_cache = (function(){
-        try{ const s = (window.SP_settings && typeof window.SP_settings === 'object') ? window.SP_settings : null; return {
+        try{ const root = (window.SP_settings && typeof window.SP_settings === 'object') ? window.SP_settings : null; const s = (root && root.security && typeof root.security === 'object') ? root.security : {}; return {
             min_length: s && s.password_min_length || 12,
             require_uppercase: s && (typeof s.require_uppercase !== 'undefined') ? !!s.require_uppercase : true,
             require_lowercase: s && (typeof s.require_lowercase !== 'undefined') ? !!s.require_lowercase : true,

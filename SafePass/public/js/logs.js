@@ -11,8 +11,14 @@ document.addEventListener('DOMContentLoaded', function () {
   const POLL_INTERVAL = 5000;
   let last_mtime = 0;
   let pollHandle = null;
-  let lines = []; // merged log lines
+  let lines = []; // merged log lines (newest first)
   let seenIds = new Set();
+  // pagination state
+  const INITIAL_BATCH = 60;
+  const PAGE_BATCH = 30;
+  let renderedCount = 0; // how many lines currently rendered/shown
+  let fileList = [];
+  let fetchPointerIndex = 0; // index into fileList for next fetch (older files)
 
   function parseLocalInputToTs(val) {
     if (!val) return null;
@@ -67,8 +73,33 @@ document.addEventListener('DOMContentLoaded', function () {
     // common datetime 'YYYY-MM-DD HH:MM:SS'
     m = line.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
     if(m) return Math.floor(new Date(m[1].replace(' ', 'T')).getTime()/1000);
+    // common EU datetime 'DD/MM/YYYY HH:MM:SS'
+    m = line.match(/(\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2})/);
+    if(m){
+      // convert DD/MM/YYYY to YYYY-MM-DD for Date parsing
+      const parts = m[1].split(' ');
+      const dparts = parts[0].split('/');
+      const iso = dparts[2] + '-' + dparts[1] + '-' + dparts[0] + 'T' + parts[1];
+      return Math.floor(new Date(iso).getTime()/1000);
+    }
     // 'HH:MM:SS' (no date) - skip
     return null;
+  }
+
+  function normalizeLogTextForKey(text){
+    if(!text) return '';
+    let s = String(text);
+    // remove common leading timestamps possibly wrapped in brackets: [YYYY-MM-DD HH:MM:SS] or ISO
+    s = s.replace(/^\s*\[?\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2})(?:\.\d+)?\]?\s*/,'');
+    // remove DD/MM/YYYY HH:MM:SS in brackets
+    s = s.replace(/^\s*\[?\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}\]?\s*/,'');
+    // remove YYYY-MM-DD HH:MM:SS without brackets
+    s = s.replace(/^\s*\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s*/,'');
+    // remove leading log level token if present, possibly wrapped in brackets
+    s = s.replace(/^\s*\[?(ERROR|WARN(?:ING)?|INFO|DEBUG)\]?[:\s-]*/i,'');
+    // trim and collapse whitespace
+    s = s.replace(/\s+/g,' ');
+    return s.trim();
   }
 
   function parseFileToLines(fileName, mtime, txt){
@@ -90,34 +121,84 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function renderLines(){
-    // lines already sorted descending by ts
+    // render only up to `renderedCount` raw lines from `lines` (lines sorted desc)
     content.innerHTML = '';
-    // group by day (YYYY-MM-DD) preserving descending order
-    const groups = new Map();
-    for(const ln of lines){
+    const slice = lines.slice(0, Math.min(renderedCount, lines.length));
+    // Group identical messages per-day regardless of their adjacency so incoming duplicates
+    // are merged live into a single expandable stack.
+    const perDay = new Map();
+    for (const ln of slice) {
       const day = new Date(ln.ts*1000).toISOString().slice(0,10);
-      if(!groups.has(day)) groups.set(day, []);
-      groups.get(day).push(ln);
+      if (!perDay.has(day)) perDay.set(day, []);
+      perDay.get(day).push(ln);
     }
-    // render groups in the order of insertion (lines sorted desc => newest day first)
-    for (const [day, dayLines] of groups){
+
+    for (const [day, dayLines] of perDay){
       const dayHeader = document.createElement('div'); dayHeader.className = 'day-header'; dayHeader.textContent = new Date(day+'T00:00:00').toLocaleDateString();
       content.appendChild(dayHeader);
-      for(const ln of dayLines){
+      // group by message text
+      const groupsMap = new Map();
+      for (const ln of dayLines) {
+        const key = normalizeLogTextForKey(ln.text || '').toLowerCase();
+        if (groupsMap.has(key)) {
+          const g = groupsMap.get(key);
+          g.count += 1;
+          g.items.push(ln);
+          if (ln.ts > g.ts) g.ts = ln.ts;
+        } else {
+          groupsMap.set(key, { text: ln.text, ts: ln.ts, level: ln.level, items: [ln], count: 1 });
+        }
+      }
+
+      const groupsArr = Array.from(groupsMap.values());
+      // show groups ordered by newest occurrence
+      groupsArr.sort((a,b)=>b.ts - a.ts);
+
+      for (const ln of groupsArr) {
+        // determine which occurrence to display as the primary (newest)
+        ln.items.sort((a,b)=>b.ts - a.ts);
+        const primary = ln.items[0];
         const d = document.createElement('div');
         d.className = 'log-line';
-        // add full-line level class for background highlighting
-        d.classList.add('lvl-' + ln.level + '-line');
-        const ts = document.createElement('span'); ts.className='log-timestamp'; ts.textContent = new Date(ln.ts*1000).toLocaleString();
-        const txt = document.createElement('span'); txt.className = 'log-content-line ' + ('lvl-' + ln.level);
-        // build content DOM safely (avoid double-escaping issues)
-        const frag = buildContentFragment(ln.text || '');
-        txt.appendChild(frag);
+        d.classList.add('lvl-' + primary.level + '-line');
+        const ts = document.createElement('span'); ts.className='log-timestamp'; ts.textContent = new Date(primary.ts*1000).toLocaleString();
+        const txt = document.createElement('span'); txt.className = 'log-content-line ' + ('lvl-' + primary.level);
+        txt.appendChild(buildContentFragment(primary.text || ''));
         d.appendChild(ts); d.appendChild(txt);
+
+        if (ln.count > 1) {
+          const wrapper = document.createElement('div'); wrapper.className = 'stack-wrapper';
+          const badge = document.createElement('button'); badge.className = 'log-duplicate-count'; badge.textContent = '×' + ln.count; badge.title = ln.count + ' occurrences';
+          badge.setAttribute('aria-expanded', 'false');
+          wrapper.appendChild(badge);
+
+          const stacked = document.createElement('div'); stacked.className = 'stacked-items'; stacked.style.display = 'none';
+          // show the other occurrences (excluding primary), newest first
+          for (let i = 1; i < ln.items.length; i++){
+            const it = ln.items[i];
+            const item = document.createElement('div'); item.className = 'stacked-item';
+            const its = document.createElement('span'); its.className='log-timestamp'; its.textContent = new Date(it.ts*1000).toLocaleString();
+            const ittxt = document.createElement('span'); ittxt.className = 'log-content-line ' + ('lvl-' + it.level);
+            ittxt.appendChild(buildContentFragment(it.text || ''));
+            item.appendChild(its); item.appendChild(ittxt);
+            stacked.appendChild(item);
+          }
+
+          badge.addEventListener('click', function(){
+            const expanded = badge.getAttribute('aria-expanded') === 'true';
+            badge.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            if(expanded){ stacked.style.display = 'none'; } else { stacked.style.display = 'flex'; }
+          });
+
+          wrapper.appendChild(stacked);
+          d.appendChild(wrapper);
+        }
+
         content.appendChild(d);
       }
     }
-    if(content.firstChild) content.scrollTop = 0;
+    // do not auto-scroll on render so user can scroll for more; only set to top on first load
+    if(content.childElementCount && renderedCount === Math.min(INITIAL_BATCH, lines.length)) content.scrollTop = 0;
   }
 
   function buildContentFragment(raw){
@@ -167,19 +248,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const r = await fetch(API_BASE + '/api/logs/updates?since=' + encodeURIComponent(String(last_mtime)));
         if (!r.ok) return;
         const j = await r.json();
-        // support backend wrapper { status, message, data: { files: [...] } }
         const updFiles = (j && Array.isArray(j.files)) ? j.files : (j && j.data && Array.isArray(j.data.files) ? j.data.files : []);
         if (!updFiles || updFiles.length === 0) return;
-        // parse and merge lines, then sort and render
-        let added = false;
+        // parse and prepend new lines, track how many new lines added
+        let added = 0;
         for (const f of updFiles) {
           const parsed = parseFileToLines(f.name, f.mtime, f.content);
-          if (parsed.length) { lines = parsed.concat(lines); added = true; }
+          if (parsed.length) { lines = parsed.concat(lines); added += parsed.length; }
           if (f.mtime > last_mtime) last_mtime = f.mtime;
         }
         if (added) {
-          // sort by ts desc
+          // sort by ts desc and update renderedCount so view keeps showing newest lines
           lines.sort((a,b)=>b.ts - a.ts);
+          renderedCount = Math.min(renderedCount + added, lines.length);
           renderLines();
         }
       } catch (e) {
@@ -216,44 +297,72 @@ document.addEventListener('DOMContentLoaded', function () {
       const list = await listResp.json();
       // support backend wrapper { status, message, data: { files: [...] } }
       const rawFiles = (list && Array.isArray(list)) ? list : (list && list.data && Array.isArray(list.data.files) ? list.data.files : []);
-      const files = rawFiles.map(f=>({name:f.name,size:f.size,mtime:parseInt(f.mtime,10)||0}));
+      let files = rawFiles.map(f=>({name:f.name,size:f.size,mtime:parseInt(f.mtime,10)||0}));
 
       const fromTs = parseLocalInputToTs(fromInput.value);
       const toTs = parseLocalInputToTs(toInput.value);
 
       // compute filtered set
-      const filtered = files.filter(f=>{
+      files = files.filter(f=>{
         if (fromTs !== null && f.mtime < fromTs) return false;
         if (toTs !== null && f.mtime > toTs) return false;
         return true;
       });
 
-      // Clear existing merged lines
+      // prepare pagination state
+      files.sort((a,b)=>b.mtime - a.mtime);
+      fileList = files;
+      fetchPointerIndex = 0;
       lines = [];
       seenIds.clear();
+      last_mtime = files.length ? Math.max(...files.map(f=>f.mtime)) : 0;
 
-      // fetch each file and parse into lines
-      filtered.sort((a,b)=>b.mtime - a.mtime);
-      for (const f of filtered) {
-        try {
-          const r = await fetch(API_BASE + '/api/logs/' + encodeURIComponent(f.name));
-          if (!r.ok) { continue; }
-          const txt = await r.text();
-          const parsed = parseFileToLines(f.name, f.mtime, txt);
-          // merge
-          if (parsed.length) lines = lines.concat(parsed);
-        } catch(e) { continue; }
-      }
-      // sort by timestamp desc
-      lines.sort((a,b)=>b.ts - a.ts);
-      // update last_mtime
-      if (filtered.length) last_mtime = Math.max(...filtered.map(f=>f.mtime)); else last_mtime = 0;
+      // fetch only until we have INITIAL_BATCH lines
+      await fillLinesUntil(INITIAL_BATCH);
+      // set renderedCount and render
+      renderedCount = Math.min(INITIAL_BATCH, lines.length);
       renderLines();
-      // ensure polling runs
+      // attach scroll handler to load more on near-bottom
+      content.removeEventListener('scroll', onContentScroll);
+      content.addEventListener('scroll', onContentScroll);
       ensurePolling();
     } catch (e) {
       content.textContent = 'Erreur: ' + e.message;
     }
+  }
+
+  async function fillLinesUntil(targetCount){
+    // fetch files sequentially until `lines` has at least targetCount entries or no files left
+    while(lines.length < targetCount && fetchPointerIndex < fileList.length){
+      const f = fileList[fetchPointerIndex++];
+      try{
+        const r = await fetch(API_BASE + '/api/logs/' + encodeURIComponent(f.name));
+        if (!r.ok) continue;
+        const txt = await r.text();
+        const parsed = parseFileToLines(f.name, f.mtime, txt);
+        if (parsed.length) lines = lines.concat(parsed);
+      }catch(e){ continue; }
+    }
+    // sort merged lines desc
+    lines.sort((a,b)=>b.ts - a.ts);
+  }
+
+  async function loadMore(){
+    const target = renderedCount + PAGE_BATCH;
+    await fillLinesUntil(target);
+    const prev = renderedCount;
+    renderedCount = Math.min(target, lines.length);
+    if (renderedCount > prev) renderLines();
+  }
+
+  function onContentScroll(){
+    try{
+      const threshold = 200; // px from bottom
+      if (content.scrollHeight - (content.scrollTop + content.clientHeight) < threshold){
+        // load next page
+        loadMore().catch(()=>{});
+      }
+    }catch(e){}
   }
 
   refreshFilesBtn.addEventListener('click', loadCombined);

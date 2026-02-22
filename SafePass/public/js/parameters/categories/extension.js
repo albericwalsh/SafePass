@@ -183,9 +183,11 @@
         } catch(e){ console.error('saveSettings error', e); status.textContent = window.t ? window.t('error') : 'Error'; setTimeout(()=>status.textContent = '', 1600); return false; } };
         // initialize settings and token display
         const s = await loadSettings();
-            if (s){ const ss = s.settings || s; try{ if (typeof detectToggle !== 'undefined' && detectToggle){ try{ if (window.SP_params && typeof window.SP_params.setBool === 'function') window.SP_params.setBool('extension-detect_enabled', !!ss.detect_enabled); else { if ('value' in detectToggle) detectToggle.value = !!ss.detect_enabled; else detectToggle.setAttribute && detectToggle.setAttribute('value', !!ss.detect_enabled); } }catch(e){} }
-                // update connection badge according to detect_enabled
-                try{ if (ss.detect_enabled){ connBadge.classList.remove('off'); connBadge.classList.add('on'); connBadge.textContent = (window.t && window.t('extension_connected')) || 'Connected'; } else { connBadge.classList.remove('on'); connBadge.classList.add('off'); connBadge.textContent = (window.t && window.t('extension_disconnected')) || 'Disconnected'; } }catch(e){}
+            if (s){ const ss = s.settings || s; try{ // prefer top-level detect_enabled but fall back to general.detect_enabled
+                const detectVal = (typeof ss.detect_enabled !== 'undefined') ? ss.detect_enabled : (ss.general && typeof ss.general.detect_enabled !== 'undefined' ? ss.general.detect_enabled : false);
+                if (typeof detectToggle !== 'undefined' && detectToggle){ try{ if (window.SP_params && typeof window.SP_params.setBool === 'function') window.SP_params.setBool('extension-detect_enabled', !!detectVal); else { if ('value' in detectToggle) detectToggle.value = !!detectVal; else detectToggle.setAttribute && detectToggle.setAttribute('value', !!detectVal); } }catch(e){} }
+                // update connection badge according to detect_enabled (using resolved value)
+                try{ if (detectVal){ connBadge.classList.remove('off'); connBadge.classList.add('on'); connBadge.textContent = (window.t && window.t('extension_connected')) || 'Connected'; } else { connBadge.classList.remove('on'); connBadge.classList.add('off'); connBadge.textContent = (window.t && window.t('extension_disconnected')) || 'Disconnected'; } }catch(e){}
             }catch(e){} }
 
         await refresh();
@@ -237,7 +239,8 @@
                 try{ if ('value' in detectToggle) val = !!detectToggle.value; else val = (detectToggle.getAttribute && (detectToggle.getAttribute('value') === 'true')) || false; }catch(e){ val = false; }
                 // update badge immediately
                 try{ if (val){ connBadge.classList.remove('off'); connBadge.classList.add('on'); connBadge.textContent = (window.t && window.t('extension_connected')) || 'Connected'; } else { connBadge.classList.remove('on'); connBadge.classList.add('off'); connBadge.textContent = (window.t && window.t('extension_disconnected')) || 'Disconnected'; } }catch(e){}
-                const ok = await saveSettings({ detect_enabled: !!val });
+                // persist under `general.detect_enabled` so backend merges into existing general settings
+                const ok = await saveSettings({ general: { detect_enabled: !!val } });
                 if (!ok){ /* if save failed, revert badge to previous state */ try{ if (!val){ connBadge.classList.remove('on'); connBadge.classList.add('off'); connBadge.textContent = (window.t && window.t('extension_disconnected')) || 'Disconnected'; } else { connBadge.classList.remove('off'); connBadge.classList.add('on'); connBadge.textContent = (window.t && window.t('extension_connected')) || 'Connected'; } }catch(e){} }
             });
         }catch(e){}

@@ -50,6 +50,40 @@ function updateItemInCategory(category, oldEntry, newEntry) {
         if (item[category]) {
             const index = item[category].findIndex(entry => JSON.stringify(entry) === JSON.stringify(oldEntry));
             if (index !== -1) {
+                try {
+                    const oldPw = (oldEntry && typeof oldEntry.password !== 'undefined') ? oldEntry.password : null;
+                    const newPw = (newEntry && typeof newEntry.password !== 'undefined') ? newEntry.password : null;
+
+                    // Build recent history list to check against (old password + saved history)
+                    const recent = [];
+                    if (oldPw) recent.push(oldPw);
+                    if (Array.isArray(oldEntry.password_history)) {
+                        for (const p of oldEntry.password_history) if (p && recent.indexOf(p) === -1) recent.push(p);
+                    }
+
+                    // Determine history length preference (for trimming/storing)
+                    let maxLen = 5;
+                    try {
+                        if (window.SP_settings && window.SP_settings.security && typeof window.SP_settings.security.password_history_length !== 'undefined') {
+                            maxLen = parseInt(window.SP_settings.security.password_history_length, 10) || maxLen;
+                        } else if (window.SP_params && typeof window.SP_params.getVal === 'function') {
+                            const v = window.SP_params.getVal('security-password_history_length');
+                            if (typeof v !== 'undefined' && v !== null && v !== '') maxLen = parseInt(v, 10) || maxLen;
+                        }
+                    } catch (e) { }
+
+                    // If password changed, verify it is not present in recent history
+                    if (oldPw !== null && newPw !== null && oldPw !== newPw) {
+                        // exact match check
+                        for (const p of recent) { if (p === newPw) { showDurationAlertMessage('Ce mot de passe a déjà été utilisé récemment.', 2500, '--sp-alert'); return; } }
+
+                        // build new history: prepend oldPw and merge previous history, then trim
+                        let hist = Array.isArray(newEntry.password_history) ? newEntry.password_history.slice() : (Array.isArray(oldEntry.password_history) ? oldEntry.password_history.slice() : []);
+                        if (oldPw && (!hist.length || hist[0] !== oldPw)) hist.unshift(oldPw);
+                        hist = hist.slice(0, Math.max(0, parseInt(maxLen,10) || 0));
+                        newEntry.password_history = hist;
+                    }
+                } catch (e) { console.error('password history update error', e); }
                 item[category][index] = newEntry;
             }
         }

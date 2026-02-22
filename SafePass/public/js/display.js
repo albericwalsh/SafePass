@@ -88,6 +88,13 @@ async function loadFaviconForImage(hostname, imgEl) {
     console.debug('[favicon] fallback default for', hostname);
 }
 
+function renderStatsView() {
+    if (typeof window.SP_renderStatsView === 'function') {
+        return window.SP_renderStatsView();
+    }
+    console.error('SP_renderStatsView introuvable: le script public/js/display/stats.js est probablement non chargé.');
+}
+
 async function displayCategory(category) {
     currentCategory = category;
     // Wait for required aws-* web components to be defined before constructing rows
@@ -104,10 +111,238 @@ async function displayCategory(category) {
 
     let tableHeaders = $('#table-headers');
     let tableBody = $('#dynamic-list');
+    const searchBar = document.querySelector('.search-bar');
+    const tableEl = document.getElementById('dynamic-table');
+    const statsView = document.getElementById('stats-view');
     tableHeaders.empty();
     tableBody.empty();
 
     console.log("currentCategory:", currentCategory);
+
+    const tr = (key, fallback) => {
+        try {
+            if (window.t && typeof window.t === 'function') {
+                const value = window.t(key);
+                if (value && value !== key) return value;
+            }
+        } catch (e) {}
+        return fallback;
+    };
+
+    if (currentCategory === 'stats') {
+        if (searchBar) searchBar.style.display = 'none';
+        if (tableEl) tableEl.style.display = 'none';
+        if (statsView) {
+            statsView.style.display = '';
+            renderStatsView();
+        }
+        return;
+    }
+
+    if (currentCategory === 'expiring_soon') {
+        if (searchBar) searchBar.style.display = '';
+        if (tableEl) tableEl.style.display = '';
+        if (statsView) statsView.style.display = 'none';
+
+        const headers = ['name', 'password'];
+        headers.forEach(key => {
+            const cell = document.createElement('aws-table-cell');
+            cell.setAttribute('data-key', key);
+            cell.textContent = key === 'name' ? tr('name', 'Nom') : tr('password_short', 'MDP');
+            const theadEl = tableHeaders[0] || document.getElementById('table-headers');
+            if (theadEl && typeof theadEl.appendChild === 'function') theadEl.appendChild(cell);
+            else tableHeaders.append(cell);
+        });
+        const editHeader = document.createElement('aws-table-cell');
+        editHeader.textContent = (window.t && window.t('edit')) || 'Edit';
+        const theadElEdit = tableHeaders[0] || document.getElementById('table-headers');
+        if (theadElEdit && typeof theadElEdit.appendChild === 'function') theadElEdit.appendChild(editHeader);
+        else tableHeaders.append(editHeader);
+
+        const expiringRows = Array.isArray(window.SP_expiring_entries_cache) ? window.SP_expiring_entries_cache : [];
+        expiringRows.forEach(item => {
+            if (!item || !item.entry) return;
+            const entry = item.entry;
+            const row = document.createElement('aws-table-row');
+
+            const nameCell = document.createElement('aws-table-cell');
+            nameCell.setAttribute('data-key', 'name');
+            nameCell.innerHTML = `<aws-input mode="view" variant="primary" type="text" value="${escapeHtml(entry.name || '')}"></aws-input>`;
+            row.appendChild(nameCell);
+
+            const pwCell = document.createElement('aws-table-cell');
+            pwCell.setAttribute('data-key', 'password');
+            const rawPw = (typeof entry.password === 'string') ? entry.password : '';
+            pwCell.innerHTML = `<aws-input mode="view" variant="primary" type="password" value="${escapeHtml(rawPw)}"></aws-input>`;
+            row.appendChild(pwCell);
+
+            const toolsCell = document.createElement('aws-table-cell');
+            toolsCell.setAttribute('data-key', 'Tools');
+            const editBtn = document.createElement('aws-icon-button');
+            editBtn.setAttribute('size', 'sm');
+            editBtn.setAttribute('variant', 'primary');
+            editBtn.innerHTML = '<span class="material-icons">edit</span>';
+            editBtn.addEventListener('click', () => showEditForm(item.category, entry));
+            toolsCell.appendChild(editBtn);
+            row.appendChild(toolsCell);
+
+            try {
+                const values = [String(entry.name || ''), String(rawPw || ''), String(item.daysLeft || '')];
+                row.setAttribute('data-search', escapeHtml(values.join(' ').toLowerCase()));
+            } catch (e) {}
+
+            const tbodyEl = tableBody[0] || document.getElementById('dynamic-list');
+            if (tbodyEl && typeof tbodyEl.appendChild === 'function') tbodyEl.appendChild(row);
+            else tableBody.append(row);
+        });
+
+        try {
+            const tbodyEl = (tableBody && tableBody[0]) ? tableBody[0] : document.getElementById('dynamic-list');
+            await waitForShadowRoots(tbodyEl, 'aws-table-cell', 1500);
+            await new Promise(r => setTimeout(r, 30));
+        } catch (e) {
+            console.debug('shadow root wait failed', e);
+        }
+        return;
+    }
+
+    if (currentCategory === 'pwned_pairs') {
+        if (searchBar) searchBar.style.display = '';
+        if (tableEl) tableEl.style.display = '';
+        if (statsView) statsView.style.display = 'none';
+
+        const headers = ['name', 'password'];
+        headers.forEach(key => {
+            const cell = document.createElement('aws-table-cell');
+            cell.setAttribute('data-key', key);
+            cell.textContent = key === 'name' ? tr('name', 'Nom') : tr('password_short', 'MDP');
+            const theadEl = tableHeaders[0] || document.getElementById('table-headers');
+            if (theadEl && typeof theadEl.appendChild === 'function') theadEl.appendChild(cell);
+            else tableHeaders.append(cell);
+        });
+        const editHeader = document.createElement('aws-table-cell');
+        editHeader.textContent = (window.t && window.t('edit')) || 'Edit';
+        const theadElEdit = tableHeaders[0] || document.getElementById('table-headers');
+        if (theadElEdit && typeof theadElEdit.appendChild === 'function') theadElEdit.appendChild(editHeader);
+        else tableHeaders.append(editHeader);
+
+        const pwnedRows = Array.isArray(window.SP_pwned_entries_cache) ? window.SP_pwned_entries_cache : [];
+        pwnedRows.forEach(item => {
+            if (!item || !item.entry) return;
+            const entry = item.entry;
+            const row = document.createElement('aws-table-row');
+
+            const nameCell = document.createElement('aws-table-cell');
+            nameCell.setAttribute('data-key', 'name');
+            nameCell.innerHTML = `<aws-input mode="view" variant="primary" type="text" value="${escapeHtml(entry.name || '')}"></aws-input>`;
+            row.appendChild(nameCell);
+
+            const pwCell = document.createElement('aws-table-cell');
+            pwCell.setAttribute('data-key', 'password');
+            const rawPw = (typeof entry.password === 'string') ? entry.password : '';
+            pwCell.innerHTML = `<aws-input mode="view" variant="primary" type="password" value="${escapeHtml(rawPw)}"></aws-input>`;
+            row.appendChild(pwCell);
+
+            const toolsCell = document.createElement('aws-table-cell');
+            toolsCell.setAttribute('data-key', 'Tools');
+            const editBtn = document.createElement('aws-icon-button');
+            editBtn.setAttribute('size', 'sm');
+            editBtn.setAttribute('variant', 'primary');
+            editBtn.innerHTML = '<span class="material-icons">edit</span>';
+            editBtn.addEventListener('click', () => showEditForm(item.category, entry));
+            toolsCell.appendChild(editBtn);
+            row.appendChild(toolsCell);
+
+            try {
+                const values = [String(entry.name || ''), String(rawPw || ''), String(item.username || '')];
+                row.setAttribute('data-search', escapeHtml(values.join(' ').toLowerCase()));
+            } catch (e) {}
+
+            const tbodyEl = tableBody[0] || document.getElementById('dynamic-list');
+            if (tbodyEl && typeof tbodyEl.appendChild === 'function') tbodyEl.appendChild(row);
+            else tableBody.append(row);
+        });
+
+        try {
+            const tbodyEl = (tableBody && tableBody[0]) ? tableBody[0] : document.getElementById('dynamic-list');
+            await waitForShadowRoots(tbodyEl, 'aws-table-cell', 1500);
+            await new Promise(r => setTimeout(r, 30));
+        } catch (e) {
+            console.debug('shadow root wait failed', e);
+        }
+        return;
+    }
+
+    if (currentCategory === 'rss_related_passwords') {
+        if (searchBar) searchBar.style.display = '';
+        if (tableEl) tableEl.style.display = '';
+        if (statsView) statsView.style.display = 'none';
+
+        const headers = ['name', 'password'];
+        headers.forEach(key => {
+            const cell = document.createElement('aws-table-cell');
+            cell.setAttribute('data-key', key);
+            cell.textContent = key === 'name' ? tr('name', 'Nom') : tr('password_short', 'MDP');
+            const theadEl = tableHeaders[0] || document.getElementById('table-headers');
+            if (theadEl && typeof theadEl.appendChild === 'function') theadEl.appendChild(cell);
+            else tableHeaders.append(cell);
+        });
+        const editHeader = document.createElement('aws-table-cell');
+        editHeader.textContent = (window.t && window.t('edit')) || 'Edit';
+        const theadElEdit = tableHeaders[0] || document.getElementById('table-headers');
+        if (theadElEdit && typeof theadElEdit.appendChild === 'function') theadElEdit.appendChild(editHeader);
+        else tableHeaders.append(editHeader);
+
+        const rows = Array.isArray(window.SP_rss_related_entries_cache) ? window.SP_rss_related_entries_cache : [];
+        rows.forEach(item => {
+            if (!item || !item.entry) return;
+            const entry = item.entry;
+            const row = document.createElement('aws-table-row');
+
+            const nameCell = document.createElement('aws-table-cell');
+            nameCell.setAttribute('data-key', 'name');
+            nameCell.innerHTML = `<aws-input mode="view" variant="primary" type="text" value="${escapeHtml(entry.name || '')}"></aws-input>`;
+            row.appendChild(nameCell);
+
+            const pwCell = document.createElement('aws-table-cell');
+            pwCell.setAttribute('data-key', 'password');
+            const rawPw = (typeof entry.password === 'string') ? entry.password : '';
+            pwCell.innerHTML = `<aws-input mode="view" variant="primary" type="password" value="${escapeHtml(rawPw)}"></aws-input>`;
+            row.appendChild(pwCell);
+
+            const toolsCell = document.createElement('aws-table-cell');
+            toolsCell.setAttribute('data-key', 'Tools');
+            const editBtn = document.createElement('aws-icon-button');
+            editBtn.setAttribute('size', 'sm');
+            editBtn.setAttribute('variant', 'primary');
+            editBtn.innerHTML = '<span class="material-icons">edit</span>';
+            editBtn.addEventListener('click', () => showEditForm(item.category, entry));
+            toolsCell.appendChild(editBtn);
+            row.appendChild(toolsCell);
+
+            try {
+                const values = [String(entry.name || ''), String(rawPw || ''), String(item.username || '')];
+                row.setAttribute('data-search', escapeHtml(values.join(' ').toLowerCase()));
+            } catch (e) {}
+
+            const tbodyEl = tableBody[0] || document.getElementById('dynamic-list');
+            if (tbodyEl && typeof tbodyEl.appendChild === 'function') tbodyEl.appendChild(row);
+            else tableBody.append(row);
+        });
+
+        try {
+            const tbodyEl = (tableBody && tableBody[0]) ? tableBody[0] : document.getElementById('dynamic-list');
+            await waitForShadowRoots(tbodyEl, 'aws-table-cell', 1500);
+            await new Promise(r => setTimeout(r, 30));
+        } catch (e) {
+            console.debug('shadow root wait failed', e);
+        }
+        return;
+    }
+
+    if (searchBar) searchBar.style.display = '';
+    if (tableEl) tableEl.style.display = '';
+    if (statsView) statsView.style.display = 'none';
 
     if (!Array.isArray(allData)) {
         console.error("allData is not an array:", allData);

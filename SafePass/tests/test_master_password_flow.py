@@ -50,7 +50,7 @@ def teardown_module(module):
 
 def test_master_change_flow():
     # import app after token created
-    import app as _app_module
+    from back import app as _app_module
     client = _app_module.app.test_client()
 
     # ensure no master password configured initially
@@ -58,7 +58,7 @@ def test_master_change_flow():
     resp = client.post('/admin/master_password/change', json={'old_password': 'x', 'new_password': 'y'})
     assert resp.status_code == 400
     j = resp.get_json()
-    assert j and ('error' in j)
+    assert j and j.get('status') == 'error'
 
     # set a new master password
     resp2 = client.post('/admin/master_password', json={'password': 'abc123'})

@@ -17,20 +17,65 @@ function getModalHost() {
     container.id = 'safepass-credentials-modal';
 
     const style = document.createElement('style');
-    style.textContent = `
-    :host { all: initial; }
-    #safepass-credentials-modal { position: relative; display:block; width:360px; max-width:92vw; border-radius:14px; overflow:hidden; box-shadow:0 18px 50px rgba(3,10,30,0.6); background: rgba(8,12,20,0.96); color: var(--sp-light); font-family: Inter, Arial, sans-serif; border:1px solid rgba(255,255,255,0.04); }
-    .modal-inner { padding:14px; }
-    .modal-title { font-weight:700; margin-bottom:8px; font-size:14px }
-    .modal-muted { color: rgba(255,255,255,0.75); font-size:12px; margin-bottom:8px }
-    .cred-list { max-height:320px; overflow:auto; border-radius:10px; background: rgba(255,255,255,0.03); padding:8px }
-    .cred-row { padding:10px;border-radius:10px;margin-bottom:8px; display:flex;flex-direction:column; gap:6px; cursor:pointer; transition: transform .12s ease, box-shadow .12s ease; background: rgba(0,0,0,0.12); }
-    .cred-row:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(2,8,24,0.6) }
-    .cred-username { font-weight:600; color:var(--sp-light) }
-    .cred-source { font-size:12px; color: rgba(255,255,255,0.75) }
+    // attempt to import extension font.css into the Shadow DOM
+    let fontImport = '';
+    try {
+        if (typeof chrome !== 'undefined' && chrome.runtime && typeof chrome.runtime.getURL === 'function') {
+            const fontUrl = chrome.runtime.getURL('src/font.css');
+            fontImport = `@import url("${fontUrl}");\n`;
+        }
+    } catch (e) {}
+    style.textContent = `${fontImport}` + `
+    :host {
+        --sp-dark: #172033;
+        --sp-light: #e6eef6;
+        --sp-card: #0b1220;
+        --sp-accent: #21c997;
+        --sp-accent-grad: linear-gradient(90deg, #21c997, #33d8b0);
+        font-family: 'Quicksand', Arial, sans-serif;
+        all: initial;
+    }
+    #safepass-credentials-modal {
+        position: relative;
+        display:block;
+        width:380px;
+        max-width:92vw;
+        border-radius:12px;
+        overflow:hidden;
+        box-shadow:0 18px 50px rgba(3,10,30,0.6);
+        background: linear-gradient(180deg, rgba(11,18,32,0.98), rgba(6,10,18,0.95));
+        color: var(--sp-light);
+        border:1px solid rgba(255,255,255,0.04);
+    }
+    .modal-inner { padding:12px; }
+    .modal-title { font-weight:700; margin-bottom:6px; font-size:15px; }
+    .modal-muted { color: rgba(230,238,246,0.8); font-size:12px; margin-bottom:8px }
+    .cred-list { max-height:320px; overflow:auto; border-radius:8px; background: rgba(255,255,255,0.02); padding:6px }
+    .cred-row {
+        padding:10px;
+        border-radius:8px;
+        margin-bottom:8px;
+        display:flex;
+        flex-direction:row;
+        align-items:center;
+        gap:12px;
+        cursor:pointer;
+        transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+        background: transparent;
+        border:1px solid rgba(255,255,255,0.02);
+    }
+    .cred-row:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(2,8,24,0.6); background: rgba(255,255,255,0.02); }
+    .cred-favicon { width:28px; height:28px; border-radius:6px; flex:0 0 28px; background: rgba(255,255,255,0.04); display:inline-block }
+    .cred-main { display:flex; flex-direction:column; flex:1; min-width:0 }
+    .cred-username { font-weight:600; color:var(--sp-light); font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
+    .cred-source { font-size:12px; color: rgba(230,238,246,0.75); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
     .modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px }
-    .btn { padding:8px 10px; border-radius:10px; cursor:pointer; border:1px solid rgba(255,255,255,0.04); background:transparent }
-    .btn.primary { background: var(--sp-accent-grad); border:none; color:var(--sp-accent-text) }
+    .btn { padding:8px 10px; border-radius:10px; cursor:pointer; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--sp-light); }
+    .btn.primary { background: var(--sp-accent-grad); border:none; color:#042024 }
+    @media (max-width: 420px) {
+        #safepass-credentials-modal { width: calc(100vw - 24px); left: 12px; right: 12px }
+        .cred-username { font-size:13px }
+    }
     `;
 
     sr.appendChild(style);
@@ -159,27 +204,90 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 matches.forEach((m) => {
                     const row = document.createElement('div');
                     row.className = 'cred-row';
+                    const favicon = document.createElement('img');
+                    favicon.className = 'cred-favicon';
+                    try {
+                        // prefer domain provided by server match (primary domain), fallback to derive from match url or current hostname
+                        let favDomain = null;
+                        if (m && m.domain) favDomain = m.domain;
+                        else if (m && m.url) {
+                            try {
+                                let u = m.url;
+                                if (!u.includes('://')) u = 'http://' + u;
+                                favDomain = (new URL(u)).hostname.split('.').slice(-2).join('.');
+                            } catch (e) {
+                                favDomain = window.location.hostname;
+                            }
+                        } else {
+                            favDomain = window.location.hostname;
+                        }
+                        // transforme favDomain (auth.google.com -> google.com) to increase chances of favicon being available, but fallback to full domain if needed
+                        favDomain = favDomain.split('.').slice(-2).join('.');
+                        favicon.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(favDomain)}&sz=64`;
+                    } catch (e) {
+                        favicon.src = '';
+                    }
+                    favicon.alt = '';
+                    favicon.loading = 'lazy';
+
                     const u = document.createElement('div'); u.className = 'cred-username'; u.textContent = m.username || '(vide)';
                     const s = document.createElement('div'); s.className = 'cred-source'; s.textContent = m.source || '';
-                    row.appendChild(u); row.appendChild(s);
-                    row.addEventListener('click', () => {
+                    const main = document.createElement('div'); main.className = 'cred-main';
+                    main.appendChild(u);
+                    main.appendChild(s);
+                    row.appendChild(favicon);
+                    row.appendChild(main);
+                    row.addEventListener('click', async () => {
                         try {
-                            const passEls = findPasswordElements();
-                            const usernameCandidates = getUsernameCandidates(passEls.length ? passEls[0] : null);
+                            let passEls = findPasswordElements();
                             const filledUserElements = [];
                             const filledPassElements = [];
 
-                            usernameCandidates.forEach(ue => {
-                                if (typeof m.username !== 'undefined') {
-                                    try { setNativeValue(ue, m.username); filledUserElements.push(getElementDescriptor(ue)); } catch(e) { console.warn(e); }
-                                }
-                            });
+                            try { console.debug('SafePass: found password elements', passEls.length, passEls.map(getElementDescriptor)); } catch(e) {}
+                            try { console.debug('SafePass: match data', m); } catch(e) {}
 
-                            passEls.forEach(pe => {
-                                if (typeof m.password !== 'undefined') {
-                                    try { setNativeValue(pe, m.password); filledPassElements.push(getElementDescriptor(pe)); } catch(e) { console.warn(e); }
+                            // choose best username field candidate (prefer proximity heuristics)
+                            let usernameEl = null;
+                            try {
+                                usernameEl = findBestUsername(passEls.length ? passEls[0] : null) || (getUsernameCandidates(passEls.length ? passEls[0] : null)[0] || null);
+                            } catch (e) { usernameEl = null; }
+
+                            if (!usernameEl) {
+                                // fallback: try any visible candidate
+                                const candidates = getUsernameCandidates(passEls.length ? passEls[0] : null);
+                                if (candidates && candidates.length) usernameEl = candidates[0];
+                            }
+
+                            try { console.debug('SafePass: selected username element for fill', getElementDescriptor(usernameEl)); } catch(e) {}
+
+                            if (usernameEl && typeof m.username !== 'undefined') {
+                                try { usernameEl.focus && usernameEl.focus(); setNativeValue(usernameEl, m.username); filledUserElements.push(getElementDescriptor(usernameEl)); } catch(e) { console.warn(e); }
+                            }
+
+                            // ensure we have password elements; fallback to querySelector if none found
+                            if ((!passEls || passEls.length === 0)) {
+                                try {
+                                    const fallback = Array.from(document.querySelectorAll('input[type="password"]')).filter(isVisible);
+                                    if (fallback && fallback.length) passEls = fallback;
+                                } catch (e) {}
+                            }
+
+                            // small delay before filling password to avoid site scripts interfering
+                            await new Promise(r => setTimeout(r, 60));
+
+                            for (const pe of passEls) {
+                                if (pe && (pe.type === 'password' || pe.getAttribute('type') === 'password') && typeof m.password !== 'undefined') {
+                                    try { pe.focus && pe.focus(); setNativeValue(pe, m.password); filledPassElements.push(getElementDescriptor(pe)); } catch(e) { console.warn(e); }
                                 }
-                            });
+                            }
+
+                            // If still nothing filled, try first visible password input once more
+                            if (filledPassElements.length === 0 && typeof m.password !== 'undefined') {
+                                try {
+                                    const tryOne = document.querySelector('input[type="password"]');
+                                    if (tryOne && isVisible(tryOne)) { tryOne.focus && tryOne.focus(); setNativeValue(tryOne, m.password); filledPassElements.push(getElementDescriptor(tryOne)); }
+                                } catch (e) {}
+                            }
 
                             try { console.info('SafePass: modal filled username elements', filledUserElements); } catch(e) {}
                             try { console.info('SafePass: modal filled password elements', filledPassElements); } catch(e) {}

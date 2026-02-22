@@ -15,6 +15,6 @@ setup(name='SafePass',
       description='Password manager',
       author='Alberic WALSH DE SERRANT',
       url='https://www.python.org/sigs/distutils-sig/',
-      packages=['res', 'back', 'data', 'public', 'back.crypting', 'node_modules'],
-      script_name='app.py',
+      packages=['res', 'back', 'back.routes', 'data', 'public', 'back.crypting', 'node_modules'],
+      script_name='SafePass.py',
       )
