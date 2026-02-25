@@ -19,6 +19,7 @@ import requests
 
 app = Flask(__name__)
 PROJECT_ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), '..'))
+PUBLIC_DIR = os.path.join(PROJECT_ROOT, 'public')
 
 # -----------------------------------------------------------------------------
 # Runtime settings (loaded from data/settings.json)
@@ -655,19 +656,54 @@ except Exception:
 # Encryption key loader
 # -----------------------------------------------------------------------------
 def _encryption_key_paths():
-    # prefer configured token_path, then canonical AppData token, then legacy tokens
+    # prefer configured token_path, then token files near configured data_path,
+    # then canonical AppData token, then legacy tokens
     paths = []
+
+    def _add(path_value):
+        if not path_value:
+            return
+        p = str(path_value).strip()
+        if not p:
+            return
+        if p not in paths:
+            paths.append(p)
+
     try:
         tp = SETTINGS.get('storage', {}).get('token_path') if isinstance(SETTINGS, dict) else None
-        if tp:
-            paths.append(tp)
+        _add(tp)
     except Exception:
         pass
+
+    try:
+        dp = None
+        if isinstance(SETTINGS, dict):
+            storage_cfg = SETTINGS.get('storage') if isinstance(SETTINGS.get('storage'), dict) else None
+            if storage_cfg:
+                dp = storage_cfg.get('data_path')
+            if not dp:
+                dp = SETTINGS.get('data_path')
+
+        if dp:
+            sp = get_system_paths()
+            data_path = str(dp).strip()
+            if data_path and not os.path.isabs(data_path):
+                data_path = os.path.normpath(os.path.join(sp['root_dir'], data_path))
+
+            if data_path.lower().endswith('.sfpss'):
+                data_dir = os.path.dirname(data_path)
+                data_base = os.path.splitext(os.path.basename(data_path))[0]
+                _add(os.path.join(data_dir, f'{data_base}.token'))
+                _add(os.path.join(data_dir, 'mdp.token'))
+                _add(os.path.join(data_dir, '.token'))
+    except Exception:
+        pass
+
     sp = get_system_paths()
-    paths.append(sp['master_token_path'])
-    paths.append(os.path.join(sp['data_dir'], 'mdp.token'))
-    paths.append(os.path.join(PROJECT_ROOT, 'data', '.token'))
-    paths.append(os.path.join(PROJECT_ROOT, 'data', 'mdp.token'))
+    _add(sp['master_token_path'])
+    _add(os.path.join(sp['data_dir'], 'mdp.token'))
+    _add(os.path.join(PROJECT_ROOT, 'data', '.token'))
+    _add(os.path.join(PROJECT_ROOT, 'data', 'mdp.token'))
     return paths
 
 
@@ -676,6 +712,62 @@ def load_encryption_key():
     global key
     import os
     from cryptography.fernet import Fernet
+
+    sp = get_system_paths()
+
+    candidate_data_paths = []
+    try:
+        dp = None
+        if isinstance(SETTINGS, dict):
+            storage_cfg = SETTINGS.get('storage') if isinstance(SETTINGS.get('storage'), dict) else None
+            if storage_cfg:
+                dp = storage_cfg.get('data_path')
+            if not dp:
+                dp = SETTINGS.get('data_path')
+        if dp:
+            if not os.path.isabs(dp):
+                dp = os.path.normpath(os.path.join(sp['root_dir'], dp))
+            candidate_data_paths.append(dp)
+    except Exception:
+        pass
+
+    candidate_data_paths.extend([
+        sp.get('data_file_path'),
+        os.path.join(PROJECT_ROOT, 'data', 'data_encrypted.sfpss'),
+        os.path.join(PROJECT_ROOT, 'data', 'mdp.sfpss'),
+    ])
+
+    seen_data = set()
+    existing_data_paths = []
+    for path_value in candidate_data_paths:
+        if not path_value:
+            continue
+        p = os.path.normpath(str(path_value))
+        if p in seen_data:
+            continue
+        seen_data.add(p)
+        if os.path.exists(p):
+            existing_data_paths.append(p)
+
+    def _candidate_works_for_data(candidate_key):
+        if not existing_data_paths:
+            return True
+        for data_path in existing_data_paths:
+            try:
+                with open(data_path, 'rb') as encrypted_file:
+                    encrypted_payload = encrypted_file.read()
+                cipher = Fernet(candidate_key)
+                decrypted = cipher.decrypt(encrypted_payload)
+                json.loads(decrypted.decode('utf-8'))
+                log.info(f'Clé validée par déchiffrement de: {data_path}')
+                return True
+            except Exception:
+                continue
+        return False
+
+    first_valid_key = None
+    first_valid_source = None
+
     for p in _encryption_key_paths():
         try:
             if not p:
@@ -691,23 +783,36 @@ def load_encryption_key():
             # try as bytes first
             try:
                 Fernet(raw)
-                key = raw
-                log.info(f'Clé de chiffrement chargée depuis: {p}')
-                return
+                candidate = raw
             except Exception:
                 # try decode as text
                 try:
                     s = raw.decode('utf-8').strip()
                     Fernet(s)
-                    key = s
-                    log.info(f'Clé de chiffrement chargée depuis: {p} (decoded)')
-                    return
+                    candidate = s
                 except Exception as e:
                     log.error(f'Error reading key file: {e}')
                     continue
+
+            if first_valid_key is None:
+                first_valid_key = candidate
+                first_valid_source = p
+
+            if _candidate_works_for_data(candidate):
+                key = candidate
+                log.info(f'Clé de chiffrement chargée depuis: {p}')
+                return
+
+            log.warning(f'Clé non compatible avec les données existantes, ignorée: {p}')
         except Exception as e:
             log.error(f'Error reading key file: {e}')
             continue
+
+    if first_valid_key is not None:
+        key = first_valid_key
+        log.warning(f'Aucune clé ne déchiffre les données existantes; fallback sur la première clé valide: {first_valid_source}')
+        return
+
     log.info('No encryption key found; continuing without key (data encrypted operations will fail)')
 
 
@@ -845,6 +950,26 @@ def write_app_settings(settings_obj: dict):
 
 
 # extension token routes moved to routes/extension_routes.py
+
+
+@app.route('/', methods=['GET'])
+def serve_front_index():
+    index_path = os.path.join(PUBLIC_DIR, 'index.html')
+    if os.path.isfile(index_path):
+        return send_file(index_path)
+    return jsonify({'error': 'frontend unavailable'}), 404
+
+
+@app.route('/<path:asset_path>', methods=['GET'])
+def serve_front_asset(asset_path):
+    file_path = os.path.normpath(os.path.join(PUBLIC_DIR, asset_path))
+    if not file_path.startswith(os.path.normpath(PUBLIC_DIR)):
+        return jsonify({'error': 'invalid path'}), 400
+
+    if os.path.isfile(file_path):
+        return send_file(file_path)
+
+    return jsonify({'error': 'not found'}), 404
 
 try:
     # register modular routes from routes/ package

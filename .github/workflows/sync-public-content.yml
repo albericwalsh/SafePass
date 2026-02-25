@@ -1,0 +1,31 @@
+name: Sync public content
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - LICENCE
+      - docs/user/**
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SafePass-dev
+        uses: actions/checkout@v4
+
+      - name: Sync user docs and licence to public repo
+        shell: pwsh
+        env:
+          PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+        run: |
+          if (-not $env:PUBLIC_REPO_TOKEN) {
+            throw "Le secret PUBLIC_REPO_TOKEN est requis."
+          }
+
+          ./scripts/sync_public_repo.ps1 `
+            -Token $env:PUBLIC_REPO_TOKEN `
+            -TargetRepo "albericwalsh/SafePass" `
+            -Branch "main"

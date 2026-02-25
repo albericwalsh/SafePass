@@ -1,0 +1,160 @@
+name: Release to public repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version sans préfixe v (ex: 1.3.0)"
+        required: true
+        type: string
+      prerelease:
+        description: "Marquer la release comme pre-release"
+        required: false
+        default: false
+        type: boolean
+      release_notes:
+        description: "Notes de release (optionnel, texte libre)"
+        required: false
+        default: ""
+        type: string
+
+jobs:
+  sync-public-content:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SafePass-dev
+        uses: actions/checkout@v4
+
+      - name: Sync user docs and licence to public repo
+        shell: pwsh
+        env:
+          PUBLIC_REPO_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+        run: |
+          if (-not $env:PUBLIC_REPO_TOKEN) {
+            throw "Le secret PUBLIC_REPO_TOKEN est requis."
+          }
+
+          ./scripts/sync_public_repo.ps1 `
+            -Token $env:PUBLIC_REPO_TOKEN `
+            -TargetRepo "albericwalsh/SafePass" `
+            -Branch "main"
+
+  build-and-publish:
+    runs-on: windows-latest
+    needs: sync-public-content
+    steps:
+      - name: Checkout SafePass-dev
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build executables
+        shell: pwsh
+        run: |
+          pyinstaller SafePass.spec --clean
+
+      - name: Package build + extension
+        id: package
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $artifactDir = Join-Path $PWD 'release_assets'
+          New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
+
+          $appDist = Join-Path $PWD 'dist/SafePass'
+          if (-not (Test-Path $appDist)) {
+            throw 'Build introuvable: dist/SafePass'
+          }
+
+          $appZip = Join-Path $artifactDir ("SafePass-$env:RELEASE_VERSION-windows-x64.zip")
+          Compress-Archive -Path (Join-Path $appDist '*') -DestinationPath $appZip -Force
+
+          $extensionDir = Join-Path $PWD 'SafePass-Extention'
+          if (-not (Test-Path $extensionDir)) {
+            throw 'Dossier extension introuvable: SafePass-Extention'
+          }
+
+          $extensionZip = Join-Path $artifactDir ("SafePass-extension-$env:RELEASE_VERSION.zip")
+          Compress-Archive -Path (Join-Path $extensionDir '*') -DestinationPath $extensionZip -Force
+
+          $hashesPath = Join-Path $artifactDir 'SHA256SUMS.txt'
+          Get-FileHash -Path $appZip, $extensionZip -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  $($_.Path | Split-Path -Leaf)" } |
+            Out-File -FilePath $hashesPath -Encoding utf8
+
+      - name: Generate release notes
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
+          EXTRA_NOTES: ${{ github.event.inputs.release_notes }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $tag = "v$env:RELEASE_VERSION"
+          $date = (Get-Date).ToString('yyyy-MM-dd')
+          $templatePath = Join-Path $PWD '.github/release-notes-template.md'
+          $notesPath = Join-Path $PWD 'release_assets/RELEASE_NOTES.md'
+
+          if (-not (Test-Path $templatePath)) {
+            throw 'Template introuvable: .github/release-notes-template.md'
+          }
+
+          $content = Get-Content -Path $templatePath -Raw
+          $content = $content.Replace('__TAG__', $tag)
+          $content = $content.Replace('__VERSION__', $env:RELEASE_VERSION)
+          $content = $content.Replace('__DATE__', $date)
+
+          $notes = $env:EXTRA_NOTES
+          if ([string]::IsNullOrWhiteSpace($notes)) {
+            $notes = "- Maintenance release"
+          }
+
+          $content = $content.Replace('__EXTRA_NOTES__', $notes)
+          Set-Content -Path $notesPath -Value $content -Encoding utf8
+
+      - name: Publish release in public repo
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_REPO_TOKEN }}
+          RELEASE_VERSION: ${{ github.event.inputs.version }}
+          PRERELEASE: ${{ github.event.inputs.prerelease }}
+        run: |
+          if (-not $env:GH_TOKEN) {
+            throw 'Le secret PUBLIC_REPO_TOKEN est requis pour publier la release.'
+          }
+
+          $repo = 'albericwalsh/SafePass'
+          $tag = "v$env:RELEASE_VERSION"
+          $assets = Get-ChildItem -Path 'release_assets' -File | ForEach-Object { $_.FullName }
+          $notesFile = Join-Path $PWD 'release_assets/RELEASE_NOTES.md'
+
+          if (-not $assets -or $assets.Count -eq 0) {
+            throw 'Aucun asset de release trouvé.'
+          }
+
+          if (-not (Test-Path $notesFile)) {
+            throw 'Fichier de notes introuvable: release_assets/RELEASE_NOTES.md'
+          }
+
+          $prereleaseFlag = @()
+          if ($env:PRERELEASE -eq 'true') {
+            $prereleaseFlag = @('--prerelease')
+          }
+
+          gh release view $tag --repo $repo *> $null
+          if ($LASTEXITCODE -eq 0) {
+            throw "La release $tag existe déjà. Incrémentez la version et publiez un nouveau tag."
+          }
+
+          gh release create $tag $assets --repo $repo --title "SafePass $tag" --notes-file $notesFile @prereleaseFlag

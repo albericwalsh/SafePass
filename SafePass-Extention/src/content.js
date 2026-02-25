@@ -1,5 +1,13 @@
 // src/content.js - content script that relies on utils.js (loaded first)
-try { console.info('SafePass content script loaded for', window.location.hostname); } catch(e) {}
+const SP_DEBUG = (typeof globalThis !== 'undefined' && globalThis.__SAFEPASS_DEBUG__ === true);
+function spInfo(...args) {
+    if (!SP_DEBUG) return;
+    try { console.info(...args); } catch (e) {}
+}
+function spDebug(...args) {
+    if (!SP_DEBUG) return;
+    try { console.debug(...args); } catch (e) {}
+}
 
 // create or return a Shadow DOM host to isolate modal styles from page CSS
 function getModalHost() {
@@ -102,7 +110,7 @@ function collectFields() {
     });
     try {
         const passCount = Array.from(inputs).filter(i => i.type === 'password').length;
-        console.info('SafePass: detected login fields', { domain: window.location.hostname, usernameFound: !!username, passwordCount: passCount });
+        spInfo('SafePass: detected login fields', { domain: window.location.hostname, usernameFound: !!username, passwordCount: passCount });
     } catch (e) {}
     return { url: window.location.hostname, username, password };
 }
@@ -160,8 +168,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     }
                 }
 
-                try { console.info('SafePass: filled username elements', filledUserElements); } catch(e) {}
-                try { console.info('SafePass: filled password elements', filledPassElements); } catch(e) {}
+                try { spInfo('SafePass: filled username elements', filledUserElements); } catch(e) {}
+                try { spInfo('SafePass: filled password elements', filledPassElements); } catch(e) {}
 
                 sendResponse({ status: 'filled', result: { filledUserElements, filledPassElements } });
             } catch (e) {
@@ -243,8 +251,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             const filledUserElements = [];
                             const filledPassElements = [];
 
-                            try { console.debug('SafePass: found password elements', passEls.length, passEls.map(getElementDescriptor)); } catch(e) {}
-                            try { console.debug('SafePass: match data', m); } catch(e) {}
+                            try { spDebug('SafePass: found password elements', passEls.length, passEls.map(getElementDescriptor)); } catch(e) {}
+                            try { spDebug('SafePass: match data', m); } catch(e) {}
 
                             // choose best username field candidate (prefer proximity heuristics)
                             let usernameEl = null;
@@ -258,7 +266,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 if (candidates && candidates.length) usernameEl = candidates[0];
                             }
 
-                            try { console.debug('SafePass: selected username element for fill', getElementDescriptor(usernameEl)); } catch(e) {}
+                            try { spDebug('SafePass: selected username element for fill', getElementDescriptor(usernameEl)); } catch(e) {}
 
                             if (usernameEl && typeof m.username !== 'undefined') {
                                 try { usernameEl.focus && usernameEl.focus(); setNativeValue(usernameEl, m.username); filledUserElements.push(getElementDescriptor(usernameEl)); } catch(e) { console.warn(e); }
@@ -289,8 +297,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 } catch (e) {}
                             }
 
-                            try { console.info('SafePass: modal filled username elements', filledUserElements); } catch(e) {}
-                            try { console.info('SafePass: modal filled password elements', filledPassElements); } catch(e) {}
+                            try { spInfo('SafePass: modal filled username elements', filledUserElements); } catch(e) {}
+                            try { spInfo('SafePass: modal filled password elements', filledPassElements); } catch(e) {}
 
                             // remove host (cleans shadow root)
                             const host = document.getElementById('safepass-credentials-host');

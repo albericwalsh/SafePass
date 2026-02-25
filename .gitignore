@@ -5,12 +5,14 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .venv/
+.venv-release/
 venv/
 env/
 
 # --- Build / packaging ---
 build/
 dist/
+release_assets/
 *.egg-info/
 pip-wheel-metadata/
 

@@ -14,6 +14,19 @@ import subprocess
 import time
 import threading
 
+FRONTEND_BASE_URL = 'http://localhost:3000'
+FRONTEND_HEALTH_URL = f'{FRONTEND_BASE_URL}/health'
+BACKEND_FRONT_URL = 'http://127.0.0.1:5000/'
+
+
+def _runtime_root_dir():
+    try:
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        return os.path.dirname(os.path.abspath(__file__))
+    except Exception:
+        return os.getcwd()
+
 
 def _enable_cli_console_if_requested():
     try:
@@ -43,11 +56,68 @@ def _enable_cli_console_if_requested():
     except Exception:
         return False
 
+def _diagnose_frontend_port_conflict():
+    try:
+        import requests
+        response = requests.get(FRONTEND_BASE_URL + '/', timeout=2)
+        status = response.status_code
+        server = response.headers.get('server', 'unknown')
+        csp = response.headers.get('content-security-policy', '')
+        log.warning(
+            f"Port 3000 occupé par un autre service (status={status}, server={server}, csp={'present' if csp else 'absent'})"
+        )
+        print("✗ Port 3000 occupé par un autre service. Ferme l'application qui utilise ce port puis relance SafePass.")
+    except Exception:
+        log.warning("Frontend indisponible sur localhost:3000 après démarrage")
+
+
+def wait_for_backend_front(max_attempts=5, delay_seconds=0.6, quiet=False):
+    """Vérifie que le frontend statique servi par Flask est disponible."""
+    import requests
+    for attempt in range(max_attempts):
+        try:
+            response = requests.get(BACKEND_FRONT_URL, timeout=2)
+            if response.status_code in (200, 304):
+                if not quiet:
+                    print(f"✓ Frontend Flask prêt après {attempt+1} tentatives")
+                    log.info("Frontend Flask prêt")
+                return True
+        except Exception as e:
+            if not quiet:
+                print(f"Frontend Flask tentative {attempt+1}/{max_attempts}: {str(e)}")
+        time.sleep(delay_seconds)
+    if not quiet:
+        print("✗ Frontend Flask non détecté")
+        log.warning("Frontend Flask non détecté")
+    return False
+
+
 def start_frontend():
     """Lance le serveur frontend Express.js"""
     try:
+        if wait_for_frontend(max_attempts=2, delay_seconds=0.5, quiet=True):
+            print("✓ Frontend déjà actif sur http://localhost:3000")
+            log.info("Frontend déjà actif sur http://localhost:3000")
+            return FRONTEND_BASE_URL
+
         print("Lancement du frontend Express.js...")
         log.info("Lancement du frontend Express.js...")
+        runtime_root = _runtime_root_dir()
+        meipass_root = getattr(sys, '_MEIPASS', runtime_root)
+
+        frontend_candidates = [
+            os.path.join(meipass_root, 'index.js'),
+            os.path.join(runtime_root, 'index.js'),
+        ]
+        frontend_entry = next((path for path in frontend_candidates if os.path.exists(path)), None)
+
+        if not frontend_entry:
+            raise FileNotFoundError(
+                f"Frontend introuvable. Candidats testés: {', '.join(frontend_candidates)}"
+            )
+
+        frontend_cwd = os.path.dirname(frontend_entry)
+
         # Lancer le serveur Express en arrière-plan sans ouvrir de console
         try:
             creationflags = subprocess.CREATE_NO_WINDOW
@@ -56,34 +126,50 @@ def start_frontend():
             creationflags = 0x08000000
 
         subprocess.Popen(
-            ['node', 'index.js'],
+            ['node', frontend_entry],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             creationflags=creationflags,
-            cwd='.'
+            cwd=frontend_cwd
         )
-        print("✓ Frontend Express.js démarré sur http://localhost:3000")
-        log.info("Frontend Express.js démarré sur http://localhost:3000")
-    except Exception as e:
-        print(f"✗ Erreur lors du lancement du frontend: {str(e)}")
-        log.error(f"Erreur lors du lancement du frontend: {str(e)}")
+        if wait_for_frontend(max_attempts=8, delay_seconds=1, quiet=True):
+            print("✓ Frontend Express.js démarré sur http://localhost:3000")
+            log.info("Frontend Express.js démarré sur http://localhost:3000")
+            return FRONTEND_BASE_URL
 
-def wait_for_frontend():
+        _diagnose_frontend_port_conflict()
+        if wait_for_backend_front(max_attempts=4, delay_seconds=0.7, quiet=True):
+            print("✓ Fallback frontend actif via Flask sur http://127.0.0.1:5000/")
+            log.info("Fallback frontend actif via Flask sur http://127.0.0.1:5000/")
+            return BACKEND_FRONT_URL
+        return None
+    except Exception as e:
+        print(f"✗ Erreur lors du lancement du frontend Express: {str(e)}")
+        log.error(f"Erreur lors du lancement du frontend Express: {str(e)}")
+        if wait_for_backend_front(max_attempts=6, delay_seconds=0.7, quiet=True):
+            print("✓ Fallback frontend actif via Flask sur http://127.0.0.1:5000/")
+            log.info("Fallback frontend actif via Flask sur http://127.0.0.1:5000/")
+            return BACKEND_FRONT_URL
+        return None
+
+def wait_for_frontend(max_attempts=15, delay_seconds=1, quiet=False):
     """Attendre que le frontend Express.js soit prêt"""
     import requests
-    max_attempts = 15
     for attempt in range(max_attempts):
         try:
-            response = requests.get('http://localhost:3000/', timeout=2)
-            if response.status_code in (200, 304):
-                print(f"✓ Frontend prêt après {attempt+1} tentatives")
-                log.info("Frontend prêt")
+            response = requests.get(FRONTEND_HEALTH_URL, timeout=2)
+            if response.status_code == 200:
+                if not quiet:
+                    print(f"✓ Frontend prêt après {attempt+1} tentatives")
+                    log.info("Frontend prêt")
                 return True
         except Exception as e:
-            print(f"Frontend tentative {attempt+1}/{max_attempts}: {str(e)}")
-        time.sleep(1)
-    print("✗ Frontend non détecté après plusieurs tentatives")
-    log.warning("Frontend non détecté après plusieurs tentatives")
+            if not quiet:
+                print(f"Frontend tentative {attempt+1}/{max_attempts}: {str(e)}")
+        time.sleep(delay_seconds)
+    if not quiet:
+        print("✗ Frontend non détecté après plusieurs tentatives")
+        log.warning("Frontend non détecté après plusieurs tentatives")
     return False
 
 
@@ -152,10 +238,13 @@ def main():
             if launch_frontend:
                 print("Backend Flask prêt - lancement du frontend...")
                 # Lancer le frontend une fois le backend prêt
-                start_frontend()
+                frontend_url = start_frontend()
             else:
                 print("Backend Flask prêt - frontend ignoré (startup + open_front_on_start=false)")
                 log.info("Frontend non lancé au démarrage système (open_front_on_start=false)")
+                frontend_url = None
+
+            frontend_ready = bool(frontend_url)
 
             # Attendre que le frontend réponde puis ouvrir le navigateur only for manual starts
             try_open = False
@@ -166,16 +255,19 @@ def main():
             except Exception:
                 try_open = False
 
-            if launch_frontend and try_open and wait_for_frontend():
+            if launch_frontend and try_open and frontend_ready:
                 try:
                     import webbrowser
-                    webbrowser.open('http://localhost:3000')
-                    log.info("Navigateur ouvert sur http://localhost:3000")
+                    webbrowser.open(frontend_url)
+                    log.info(f"Navigateur ouvert sur {frontend_url}")
                 except Exception as e:
                     log.error(f"Impossible d'ouvrir le navigateur: {e}")
             else:
                 if launch_frontend:
-                    log.info("Frontend démarré mais navigateur non ouvert (automated start or disabled)")
+                    if frontend_ready:
+                        log.info("Frontend démarré mais navigateur non ouvert (automated start or disabled)")
+                    else:
+                        log.warning("Frontend non prêt, navigateur non ouvert")
                 else:
                     log.info("Mode backend-only actif pour ce démarrage")
         else:

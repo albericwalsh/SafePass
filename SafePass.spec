@@ -11,7 +11,14 @@ data_files = [
     ('public', 'public'),
     ('res', 'res'),
     ('back', 'back'),
+    ('index.js', '.'),
 ]
+
+if Path('node_modules').exists():
+    data_files.append(('node_modules', 'node_modules'))
+
+if Path('package.json').exists():
+    data_files.append(('package.json', '.'))
 
 common_hiddenimports = [
     'flask',

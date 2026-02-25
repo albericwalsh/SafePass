@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const app = express();
 const port = 3000;
 
@@ -7,6 +8,7 @@ app.use(express.json());
 
 // simple proxy for backend settings endpoints
 const BACKEND = process.env.SAFEPASS_BACKEND || 'http://127.0.0.1:5000';
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
 app.get('/settings', async (req, res) => {
     try {
@@ -28,7 +30,15 @@ app.post('/settings', async (req, res) => {
     } catch (e) { return res.status(502).send('backend unavailable'); }
 });
 
-app.use(express.static('public'));
+app.get('/health', (req, res) => {
+    res.status(200).json({ ok: true, service: 'safepass-frontend' });
+});
+
+app.use(express.static(PUBLIC_DIR));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+});
 
 app.listen(port, () => {
     console.log(`Serveur démarré sur http://localhost:${port}`);

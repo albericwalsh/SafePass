@@ -68,6 +68,7 @@ Règle projet : toute modification fonctionnelle ou technique doit inclure la mi
 
 ### Documentation disponible
 
+- [Documentation utilisateur (public)](docs/user/README.md)
 - [Architecture backend](docs/README.backend.md)
 - [Routes API](docs/README.api.md)
 - [Sécurité et chiffrement](docs/README.security.md)
@@ -75,6 +76,7 @@ Règle projet : toute modification fonctionnelle ou technique doit inclure la mi
 - [Données, stockage et migration](docs/README.data.md)
 - [Tests et validation](docs/README.tests.md)
 - [Release, build et installation](docs/README.release.md)
+- [Publication vers dépôt public](docs/README.public-release.md)
 - [Guide de contribution](docs/README.contrib.md)
 
 ## Build (résumé)

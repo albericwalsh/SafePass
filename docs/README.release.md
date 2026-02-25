@@ -18,6 +18,9 @@ Garantir qu’une release SafePass est :
 3. Exécuter les tests critiques.
 4. Vérifier que la documentation est à jour.
 
+Règle de versioning release : **chaque nouveau build publié doit utiliser une nouvelle version**.
+Il est interdit d’écraser les assets d’une release déjà publiée (tag immuable).
+
 Règle projet : chaque commit de code doit inclure la mise à jour de la documentation impactée.
 
 ## Build principal (Windows)
@@ -74,12 +77,15 @@ En cas de régression :
 1. revenir à la dernière version stable,
 2. révoquer/renouveler les tokens si nécessaire,
 3. documenter l’incident et le correctif,
-4. republier une version corrigée.
+4. republier une version corrigée avec un **nouveau numéro de version**.
 
 ## Références
 
 - [README principal](../README.md)
+- [Publication vers dépôt public](README.public-release.md)
 - [Build détaillé](README.build.md)
 - [Tests et validation](README.tests.md)
 - [Sécurité et chiffrement](README.security.md)
 - [Guide de contribution](README.contrib.md)
+
+Pour la publication GitHub (assets + notes de release templatisées), voir [Publication vers dépôt public](README.public-release.md).
