@@ -6,7 +6,8 @@ Les versions sont publiées dans les Releases du dépôt public SafePass.
 
 ## Dois-je réinstaller complètement à chaque version ?
 
-Non. Fermez SafePass, remplacez les fichiers par ceux de la nouvelle version, puis relancez.
+Non. Avec l'installateur, relancez simplement `SafePass-Installer-X.Y.Z.exe`.
+En version portable, remplacez les fichiers par ceux de la nouvelle version puis relancez.
 
 ## L'extension fonctionne-t-elle sans SafePass lancé ?
 

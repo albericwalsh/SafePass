@@ -6,7 +6,8 @@ SafePass est distribué via les releases GitHub du dépôt public.
 
 Dans la page Releases, récupérer :
 
-- `SafePass-X.Y.Z-windows-x64.zip`
+- `SafePass-Installer-X.Y.Z.exe` (recommandé)
+- `SafePass-X.Y.Z-windows-x64.zip` (mode portable)
 - `SHA256SUMS.txt`
 
 Si vous utilisez l'extension navigateur, récupérer aussi :
@@ -18,12 +19,20 @@ Si vous utilisez l'extension navigateur, récupérer aussi :
 Sous PowerShell :
 
 ```powershell
-Get-FileHash .\SafePass-X.Y.Z-windows-x64.zip -Algorithm SHA256
+Get-FileHash .\SafePass-Installer-X.Y.Z.exe -Algorithm SHA256
 ```
 
 Comparer la valeur avec la ligne correspondante dans `SHA256SUMS.txt`.
 
 ## 3) Installer l'application
+
+### Option A (recommandée) : installateur
+
+1. Exécuter `SafePass-Installer-X.Y.Z.exe`.
+2. Suivre l'assistant d'installation.
+3. Lancer SafePass depuis le raccourci créé.
+
+### Option B : version portable (.zip)
 
 1. Décompresser `SafePass-X.Y.Z-windows-x64.zip` dans un dossier dédié.
 2. Lancer `SafePass.exe`.
@@ -41,5 +50,6 @@ Pour mettre à jour SafePass :
 
 1. Fermer complètement l'application.
 2. Télécharger la nouvelle release.
-3. Décompresser dans un nouveau dossier ou remplacer les fichiers existants.
-4. Relancer `SafePass.exe`.
+3. Si vous utilisez l'installateur, relancer `SafePass-Installer-X.Y.Z.exe`.
+4. Si vous utilisez la version portable, remplacer le dossier de l'ancienne version.
+5. Relancer SafePass.
