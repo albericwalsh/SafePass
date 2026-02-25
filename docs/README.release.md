@@ -64,6 +64,16 @@ Mode console utile pour debug :
 - [ ] Données runtime hors versionnement.
 - [ ] Documentation sécurité/API à jour.
 
+## Réduction des alertes Defender/SmartScreen
+
+Pour limiter les faux positifs au premier lancement :
+
+- utiliser le mode one-dir (dossier complet) et éviter les packers agressifs,
+- **désactiver UPX** dans la spec PyInstaller,
+- signer numériquement les exécutables et l’installateur (certificat code-signing),
+- publier les empreintes (`SHA256SUMS`) dans la release,
+- en cas de faux positif, soumettre l’artefact à Microsoft Defender comme *false positive*.
+
 ## Installation (base)
 
 - Build local via PyInstaller/pybuilder,

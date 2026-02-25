@@ -3,12 +3,12 @@
 
 [Setup]
 AppName=SafePass
-AppVersion=1.2.4
+AppVersion=1.2.5
 DefaultDirName={pf}\SafePass
 DefaultGroupName=SafePass
 DisableProgramGroupPage=yes
 OutputDir=dist
-OutputBaseFilename=SafePass-Installer-1.2.4
+OutputBaseFilename=SafePass-Installer-1.2.5
 Compression=lzma
 SolidCompression=yes
 
@@ -20,8 +20,8 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 
 [Files]
 ; Include single-file EXE and the unpacked folder so installer can offer either
-Source: "{#GetSourcePath}\dist\SafePass.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#GetSourcePath}\dist\SafePass\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "dist\SafePass.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\SafePass\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
 
 [Icons]
 Name: "{group}\SafePass"; Filename: "{app}\SafePass.exe"
@@ -29,11 +29,5 @@ Name: "{userdesktop}\SafePass"; Filename: "{app}\SafePass.exe"; Tasks: desktopic
 
 [Run]
 Filename: "{app}\SafePass.exe"; Description: "Launch SafePass"; Flags: nowait postinstall skipifsilent
-
-[Code]
-function GetSourcePath(Param: String): String;
-begin
-  Result := ExpandConstant('{src}');
-end;
 
 ; end of script
