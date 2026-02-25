@@ -13,6 +13,13 @@
 2. Relancer `SafePass.exe`.
 3. Vérifier qu'aucun outil de sécurité ne bloque la communication locale.
 
+## Windows affiche une alerte SmartScreen/Defender
+
+1. Vérifier que l'installateur ou l'archive provient bien de la release officielle GitHub.
+2. Contrôler l'empreinte SHA256 publiée dans la release.
+3. Si la source est fiable, autoriser l'exécution depuis l'alerte Windows.
+4. Relancer `SafePass.exe` après autorisation.
+
 ## L'extension indique une erreur de connexion
 
 1. Vérifier que SafePass est lancé.
@@ -34,3 +41,8 @@
    - version utilisée,
    - étapes de reproduction,
    - capture d'écran si possible.
+
+## Où trouver les logs
+
+- Dossier par défaut : `%APPDATA%/SafePasse/logs`.
+- Les fichiers de logs facilitent le diagnostic en cas de bug au démarrage ou avec l'extension.
