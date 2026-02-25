@@ -3,7 +3,8 @@ import json
 from urllib.parse import urlparse
 from flask import jsonify, request
 
-from back.app import log, SETTINGS, key, EXT_TOKEN, get_data_paths
+import back.app as app_state
+from back.app import log, SETTINGS, key, get_data_paths
 from back.detect import byUrl
 from back.crypting.decrypt_file import decryptByPath
 
@@ -87,8 +88,9 @@ def register(app):
                 token_header = request.headers.get('X-Ext-Auth')
             except Exception:
                 token_header = None
-            if EXT_TOKEN:
-                if not token_header or token_header != EXT_TOKEN:
+            runtime_ext_token = app_state.EXT_TOKEN
+            if runtime_ext_token:
+                if not token_header or token_header != runtime_ext_token:
                     log.warning('/credentials unauthorized request')
                     return jsonify({'error': 'unauthorized'}), 401
 

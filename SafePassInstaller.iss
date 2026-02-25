@@ -3,12 +3,12 @@
 
 [Setup]
 AppName=SafePass
-AppVersion=1.1.0.0
+AppVersion=1.2.4
 DefaultDirName={pf}\SafePass
 DefaultGroupName=SafePass
 DisableProgramGroupPage=yes
 OutputDir=dist
-OutputBaseFilename=SafePass-Installer
+OutputBaseFilename=SafePass-Installer-1.2.4
 Compression=lzma
 SolidCompression=yes
 

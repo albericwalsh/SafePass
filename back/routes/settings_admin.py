@@ -240,7 +240,7 @@ def register(app):
 
             # ensure some sensible defaults
             if 'log_dir' not in advanced:
-                advanced['log_dir'] = 'logs'
+                advanced['log_dir'] = get_system_paths()['logs_dir']
             if 'max_size_mb' not in advanced:
                 advanced['max_size_mb'] = 5
             if 'retention_days' not in advanced:

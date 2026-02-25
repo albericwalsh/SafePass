@@ -2,7 +2,8 @@ import secrets
 from datetime import datetime, timedelta
 from flask import jsonify, request
 
-from back.app import load_extension_token, EXT_TOKEN_INFO, save_extension_token, log
+import back.app as app_state
+from back.app import load_extension_token, save_extension_token, log
 
 
 def register(app):
@@ -13,10 +14,11 @@ def register(app):
             load_extension_token()
         except Exception as e:
             log.error('Failed to load extension token info: ' + str(e))
-        if EXT_TOKEN_INFO is None:
+        token_info = app_state.EXT_TOKEN_INFO
+        if token_info is None:
             log.info('No extension token found')
             return jsonify({'status': 'empty', 'token': None}), 200
-        info = EXT_TOKEN_INFO.copy()
+        info = token_info.copy()
         log.info('Extension token info retrieved: token exists, expires_at: ' + str(info.get('expires_at')))
         return jsonify({'status': 'ok', 'token': info.get('token'), 'expires_at': info.get('expires_at')}), 200
 

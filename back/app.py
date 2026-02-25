@@ -35,6 +35,7 @@ def _default_settings_template(system_paths: dict | None = None):
     backup_location = sp.get('backups_dir') or ""
     token_path = sp.get('master_token_path') or ""
     ext_token_path = sp.get('extension_token_path') or ""
+    log_dir = sp.get('logs_dir') or ""
     return {
         "display": {
             "theme": "dark"
@@ -73,7 +74,7 @@ def _default_settings_template(system_paths: dict | None = None):
             "extension_token_path": ext_token_path,
         },
         "advanced": {
-            "log_dir": "",
+                "log_dir": log_dir,
             "max_size_mb": 1,
             "retention_days": 15,
             "to_file": True,
@@ -131,8 +132,13 @@ def normalize_settings_for_persist(settings_obj):
     if not out['storage'].get('extension_token_path'):
         out['storage']['extension_token_path'] = sp['extension_token_path']
 
-    if not out['advanced'].get('log_dir'):
-        out['advanced']['log_dir'] = os.path.join(sp['root_dir'], 'logs')
+    try:
+        current_log_dir = out['advanced'].get('log_dir')
+        old_default_log_dir = os.path.join(sp['root_dir'], 'logs')
+        if (not current_log_dir) or (os.path.normpath(str(current_log_dir)) == os.path.normpath(old_default_log_dir)):
+            out['advanced']['log_dir'] = sp['logs_dir']
+    except Exception:
+        out['advanced']['log_dir'] = sp['logs_dir']
 
     return out
 
@@ -162,6 +168,7 @@ def get_system_paths():
         # legacy compatibility locations (read fallback only)
         'legacy_settings_path': os.path.join(PROJECT_ROOT, 'data', 'settings.json'),
         'legacy_data_dir': os.path.join(PROJECT_ROOT, 'data'),
+            'logs_dir': os.path.normpath(os.path.join(appdata, 'SafePasse', 'logs')),
     }
 
 
@@ -215,6 +222,7 @@ def ensure_system_tree():
     os.makedirs(sp['backups_dir'], exist_ok=True)
     os.makedirs(sp['cache_dir'], exist_ok=True)
     os.makedirs(sp['data_dir'], exist_ok=True)
+    os.makedirs(sp['logs_dir'], exist_ok=True)
 
     defaults = _default_settings_template(sp)
 
@@ -528,6 +536,11 @@ try:
     if not log_file_path:
         try:
             log_file_path = SETTINGS.get('storage', {}).get('log_file_path') or SETTINGS.get('log_file_path')
+        except Exception:
+            log_file_path = None
+    if not log_file_path:
+        try:
+            log_file_path = get_system_paths()['logs_dir']
         except Exception:
             log_file_path = None
 
@@ -917,7 +930,7 @@ def write_app_settings(settings_obj: dict):
 
             # apply sensible defaults
             if 'log_dir' not in advanced:
-                advanced['log_dir'] = 'logs'
+                advanced['log_dir'] = get_system_paths()['logs_dir']
             if 'to_file' not in advanced:
                 advanced['to_file'] = True
             if 'max_size_mb' not in advanced:

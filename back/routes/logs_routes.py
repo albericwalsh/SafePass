@@ -2,9 +2,28 @@ import os
 from datetime import datetime
 from flask import jsonify, Response, request
 from back.app import log
+from back.app import SETTINGS, get_system_paths
 
 
 def register(app):
+    def _resolve_logs_root():
+        try:
+            configured = None
+            if isinstance(SETTINGS, dict):
+                advanced = SETTINGS.get('advanced') if isinstance(SETTINGS.get('advanced'), dict) else {}
+                configured = advanced.get('log_dir')
+                if not configured:
+                    storage = SETTINGS.get('storage') if isinstance(SETTINGS.get('storage'), dict) else {}
+                    configured = storage.get('log_file_path')
+            sp = get_system_paths()
+            root_dir = sp.get('root_dir') or os.getcwd()
+            candidate = str(configured).strip() if configured else (sp.get('logs_dir') or 'logs')
+            if not os.path.isabs(candidate):
+                candidate = os.path.normpath(os.path.join(root_dir, candidate))
+            return candidate
+        except Exception:
+            return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
+
     def _resp_json(route, ok, message, data=None, status_code=200):
         body = {'route': route, 'status': 'ok' if ok else 'error', 'message': message}
         if data is not None:
@@ -22,7 +41,7 @@ def register(app):
     @app.route('/api/logs', methods=['GET'])
     def list_logs():
         try:
-            root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
+            root = _resolve_logs_root()
             if not os.path.isdir(root):
                 return _resp_json('/api/logs', True, 'logs directory not found, returning empty list', {'files': []})
             files = []
@@ -44,7 +63,7 @@ def register(app):
     @app.route('/admin/logs/list', methods=['GET'])
     def admin_list_logs():
         try:
-            root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
+            root = _resolve_logs_root()
             if not os.path.isdir(root):
                 return _resp_json('/admin/logs/list', True, 'logs directory not found, returning empty list', {'logs': []})
             items = []
@@ -66,7 +85,7 @@ def register(app):
     def get_log(filename):
         try:
             safe_name = os.path.basename(filename)
-            root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
+            root = _resolve_logs_root()
             path = os.path.join(root, safe_name)
             if not path.startswith(root):
                 log.error(f"/api/logs/<filename> attempted traversal: {filename}")
@@ -108,7 +127,7 @@ def register(app):
                         log.debug(f"parse_ts: '{val}' is not a valid ISO datetime, returning None")
                         return None
 
-            root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
+            root = _resolve_logs_root()
             if not os.path.isdir(root):
                 return _resp_json('/api/logs/all', True, 'logs directory not found, returning empty content', {'content': ''})
 
@@ -174,7 +193,7 @@ def register(app):
                     except Exception:
                         return None
 
-            root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'logs'))
+            root = _resolve_logs_root()
             if not os.path.isdir(root):
                 return _resp_json('/api/logs/updates', True, 'logs directory not found, returning empty list', {'files': []})
 
