@@ -65,6 +65,7 @@ Références :
 ## Exigences minimales
 
 - Ne jamais committer de secrets (tokens, clés, fichiers sensibles).
+- Garder hors Git les fichiers runtime sensibles: `data/.token`, `data/mdp.token`, `data/.master_password.json`, `data/extension_token.json`.
 - Garder les contrôles d’auth activés sur routes critiques.
 - Utiliser des tokens de session courts et vérifiés côté backend.
 - Exiger `X-Ext-Auth` pour les flux extension sensibles.

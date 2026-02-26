@@ -39,6 +39,14 @@ logs/
 !.env.example
 .config/config_session.json
 
+# --- SafePass runtime secrets (never commit) ---
+data/.token
+data/mdp.token
+data/.master_password.json
+data/master_password.json
+data/extension_token.json
+data/extention_token.json
+
 # --- Local app data (à garder hors git) ---
 backup/
 ../backup-*
